@@ -11,11 +11,16 @@ mod dev_tools;
 mod menus;
 mod screens;
 mod theme;
+mod game;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
+use game::GamePlugin;
 
-fn main() -> AppExit {
-    App::new().add_plugins(AppPlugin).run()
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(GamePlugin)
+        .run();
 }
 
 pub struct AppPlugin;
