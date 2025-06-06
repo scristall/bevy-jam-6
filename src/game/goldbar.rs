@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::game::tile::{Tile, TILE_SIZE, GRID_X_START, GRID_Y_START};
-use crate::game::components::Position;
+use crate::game::components::{Position, TileType};
 
 pub const GOLD_ROOM_X: i32 = 27;
 pub const GOLD_ROOM_Y: i32 = 1;
@@ -23,6 +23,7 @@ pub fn spawn_gold_bars(
         commands.spawn((
             Gold,
             Position(pos),
+            TileType::Gold,
             Sprite {
                 image: asset_server.load("images/gold_bar.png"),
                 ..default()

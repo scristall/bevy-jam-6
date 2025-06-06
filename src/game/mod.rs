@@ -12,8 +12,10 @@ mod chain;
 mod events;
 mod mouse;
 mod goldbar;
+mod goldbar_text;
 
 use crate::game::goldbar::{Gold, spawn_gold_bars};
+use crate::game::goldbar_text::GoldBarTextPlugin;
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
@@ -30,6 +32,7 @@ impl Plugin for GamePlugin {
             .add_plugins(tile::plugin)
             .add_plugins(chain::plugin)
             .add_plugins(events::plugin)
+            .add_plugins(GoldBarTextPlugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
@@ -76,7 +79,7 @@ fn setup_game(
     let end = Point::new(24, 6);
     let path: Option<Vec<Point>> = pathing_grid
         .get_path_single_goal(start, end, false);
-    
+
     match path {
         Some(val) => {
 
@@ -87,7 +90,7 @@ fn setup_game(
         },
         None => println!("No Path")
     }
-    
+
     // TODO: Spawn initial grid of tiles
 
     // Spawn gold bars
