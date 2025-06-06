@@ -169,6 +169,7 @@ fn begin_chain(
     mut materials: ResMut<Assets<ColorMaterial>>,
     q_dragging_chain: Query<&DraggingChain>,
     q_selected_chain: Query<(&SelectedChain, &ChainInInventory), Without<DraggingChain>>,
+    q_chain_segments: Query<&ChainSegment>,
 ) {
     // if there is a chain already being dragged, do nothing
     if q_dragging_chain.single().is_ok() {
@@ -189,6 +190,14 @@ fn begin_chain(
 
     // if there is a tile clicked, create a new chain
     for event in tile_clicked_events.read() {
+        // if there is a chain segment at this position, do nothing
+        if q_chain_segments
+            .iter()
+            .any(|segment| segment.0 == event.0.tile)
+        {
+            continue;
+        }
+
         let e_chain = commands
             .spawn((
                 Chain {
@@ -245,7 +254,7 @@ fn drag_chain(
             continue;
         }
 
-        // make sure the tile is not already in the chain
+        // make sure there isn't already a chain segment at this position
         if q_chain_segments
             .iter()
             .any(|segment| segment.0 == event.0.tile)
