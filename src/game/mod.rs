@@ -48,7 +48,6 @@ impl Plugin for GamePlugin {
                     pathfinding_system,
                     oxygen_drain_system,
                     death_system,
-                    goal_reached_system,
                     chain_placement_system,
                     ui_update_system,
                     wave_control_system,

@@ -43,10 +43,6 @@ pub struct Spawner;
 #[derive(Component)]
 pub struct SpawnTimer(pub Timer);
 
-// Gold components
-#[derive(Component)]
-pub struct Gold;
-
 #[derive(Component)]
 pub struct TreasureCount(pub u32);
 

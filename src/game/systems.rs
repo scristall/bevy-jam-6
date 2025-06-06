@@ -35,12 +35,12 @@ pub fn death_system(
     }
 }
 
-pub fn goal_reached_system(
-    pirates: Query<&Transform, With<Pirate>>,
-    gold: Query<&Transform, With<Gold>>,
-) {
-    // TODO: Implement goal reached check
-}
+// pub fn goal_reached_system(
+//     pirates: Query<&Transform, With<Pirate>>,
+//     gold: Query<&Transform, With<Gold>>,
+// ) {
+//     // TODO: Implement goal reached check
+// }
 
 // Player Interaction Systems
 pub fn chain_placement_system(
