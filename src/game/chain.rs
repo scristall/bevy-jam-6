@@ -13,6 +13,9 @@ pub struct Chain {
 }
 
 #[derive(Component, Debug)]
+pub struct MainInventory;
+
+#[derive(Component, Debug)]
 pub struct ChainInInventory {
     stock: u32,
     length: u32,
@@ -57,8 +60,9 @@ fn spawn_chain_segment(
     });
 }
 
-fn spawn_chain_in_inventory(
+pub fn spawn_chain_in_inventory(
     commands: &mut Commands,
+    e_parent: Entity,
     stock: u32,
     length: u32,
     asset_server: &ResMut<AssetServer>,
@@ -71,29 +75,31 @@ fn spawn_chain_in_inventory(
         ..default()
     };
 
-    commands
-        .spawn((
-            Sprite::from_image(asset_server.load("images/chain.png")),
-            ChainInInventory { stock, length },
-            Transform::from_xyz(pos.x, pos.y, 5.0),
-        ))
-        .with_children(|parent| {
-            parent.spawn((
-                ChainInInventoryStock,
-                Text2d::new(format!("{}", stock)),
-                text_font.clone(),
-                Transform::from_xyz(30.0, 30.0, 5.5),
-                TextColor(Color::linear_rgb(0.0, 0.0, 1.0)),
-            ));
+    commands.entity(e_parent).with_children(|parent| {
+        parent
+            .spawn((
+                Sprite::from_image(asset_server.load("images/chain.png")),
+                ChainInInventory { stock, length },
+                Transform::from_xyz(pos.x, pos.y, 0.0),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
+                    ChainInInventoryStock,
+                    Text2d::new(format!("{}", stock)),
+                    text_font.clone(),
+                    Transform::from_xyz(30.0, 30.0, 0.5),
+                    TextColor(Color::linear_rgb(0.0, 0.0, 1.0)),
+                ));
 
-            parent.spawn((
-                ChainInInventoryLength,
-                Text2d::new(format!("{}", length)),
-                text_font.clone(),
-                Transform::from_xyz(-30.0, -30.0, 5.5),
-                TextColor(Color::linear_rgb(1.0, 0.0, 0.0)),
-            ));
-        });
+                parent.spawn((
+                    ChainInInventoryLength,
+                    Text2d::new(format!("{}", length)),
+                    text_font.clone(),
+                    Transform::from_xyz(-30.0, -30.0, 0.5),
+                    TextColor(Color::linear_rgb(1.0, 0.0, 0.0)),
+                ));
+            });
+    });
 }
 
 fn mouse_down_on_chain_in_inventory(
@@ -143,8 +149,16 @@ fn mouse_down_on_chain_in_inventory(
 }
 
 fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
+    let e_main_inventory = commands
+        .spawn((
+            MainInventory,
+            Transform::from_xyz(0.0, 0.0, 5.0),
+            Visibility::Visible,
+        ))
+        .id();
     spawn_chain_in_inventory(
         &mut commands,
+        e_main_inventory,
         1,
         9,
         &mut asset_server,
@@ -152,6 +166,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
     );
     spawn_chain_in_inventory(
         &mut commands,
+        e_main_inventory,
         1,
         6,
         &mut asset_server,
@@ -159,6 +174,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
     );
     spawn_chain_in_inventory(
         &mut commands,
+        e_main_inventory,
         2,
         3,
         &mut asset_server,
