@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::events::{TileMouseDown, TileMouseMove, TileMouseUp};
+use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::tile::{TILE_SIZE, Tile};
 
@@ -88,7 +89,7 @@ fn spawn_chain_in_inventory(
             parent.spawn((
                 ChainInInventoryLength,
                 Text2d::new(format!("{}", length)),
-                text_font,
+                text_font.clone(),
                 Transform::from_xyz(-30.0, -30.0, 5.5),
                 TextColor(Color::linear_rgb(1.0, 0.0, 0.0)),
             ));
@@ -114,7 +115,10 @@ fn mouse_down_on_chain_in_inventory(
     let mut new_chain_selected = false;
 
     for (entity, _, mut sprite, transform) in q_unselected_chain.iter_mut() {
-        if mouse_pos.is_in(transform.translation().truncate(), CHAIN_IN_INVENTORY_SIZE) {
+        if mouse_pos.is_in(
+            transform.translation().truncate(),
+            Vec2::splat(CHAIN_IN_INVENTORY_SIZE),
+        ) {
             if mouse_button.just_pressed(MouseButton::Left) {
                 sprite.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
                 commands.entity(entity).insert(SelectedChain);
@@ -169,6 +173,7 @@ fn begin_chain(
     mut materials: ResMut<Assets<ColorMaterial>>,
     q_dragging_chain: Query<&DraggingChain>,
     q_selected_chain: Query<(&SelectedChain, &ChainInInventory), Without<DraggingChain>>,
+    q_chain_segments: Query<&ChainSegment>,
 ) {
     // if there is a chain already being dragged, do nothing
     if q_dragging_chain.single().is_ok() {
@@ -189,6 +194,14 @@ fn begin_chain(
 
     // if there is a tile clicked, create a new chain
     for event in tile_clicked_events.read() {
+        // if there is a chain segment at this position, do nothing
+        if q_chain_segments
+            .iter()
+            .any(|segment| segment.0 == event.0.tile)
+        {
+            continue;
+        }
+
         let e_chain = commands
             .spawn((
                 Chain {
@@ -245,7 +258,7 @@ fn drag_chain(
             continue;
         }
 
-        // make sure the tile is not already in the chain
+        // make sure there isn't already a chain segment at this position
         if q_chain_segments
             .iter()
             .any(|segment| segment.0 == event.0.tile)
@@ -297,8 +310,14 @@ fn end_chain(
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup);
-    app.add_systems(Update, mouse_down_on_chain_in_inventory);
-    app.add_systems(Update, begin_chain);
-    app.add_systems(Update, drag_chain);
-    app.add_systems(Update, end_chain);
+    app.add_systems(
+        Update,
+        (
+            mouse_down_on_chain_in_inventory,
+            begin_chain,
+            drag_chain,
+            end_chain,
+        )
+            .run_if(in_state(GameState::Building)),
+    );
 }

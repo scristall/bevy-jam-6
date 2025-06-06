@@ -63,15 +63,6 @@ pub struct WaveText;
 #[derive(Component)]
 pub struct GameOverUI;
 
-// Game state
-#[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
-pub enum GameState {
-    #[default]
-    Playing,
-    GameOver,
-    Paused,
-}
-
 // Resources
 #[derive(Resource)]
 pub struct GameConfig {
@@ -79,7 +70,6 @@ pub struct GameConfig {
     pub spawn_interval: f32,
     pub initial_oxygen: f32,
     pub base_movement_speed: f32,
-    pub game_state: GameState,
 }
 
 impl Default for GameConfig {
@@ -89,7 +79,6 @@ impl Default for GameConfig {
             spawn_interval: 2.0,
             initial_oxygen: 100.0,
             base_movement_speed: 2.0,
-            game_state: GameState::Playing,
         }
     }
 }

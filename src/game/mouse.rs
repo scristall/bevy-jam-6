@@ -14,14 +14,14 @@ impl MousePos {
         rect.contains(self.0)
     }
 
-    pub fn is_in(&self, pos: Vec2, size: f32) -> bool {
+    pub fn is_in(&self, pos: Vec2, size: Vec2) -> bool {
         let rect = Rect::new(
-            pos.x - size / 2.0,
-            pos.y - size / 2.0,
-            pos.x + size / 2.0,
-            pos.y + size / 2.0,
+            pos.x - size.x / 2.0,
+            pos.y - size.y / 2.0,
+            pos.x + size.x / 2.0,
+            pos.y + size.y / 2.0,
         );
-        rect.contains(self.0)
+        self.is_in_rect(rect)
     }
 }
 
