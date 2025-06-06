@@ -14,7 +14,7 @@ mod mouse;
 mod goldbar;
 mod goldbar_text;
 
-use crate::game::goldbar::{Gold, spawn_gold_bars};
+use crate::game::goldbar::{Gold, spawn_gold_bars, plugin as goldbar_plugin};
 use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
 
 use grid_pathfinding::PathingGrid;
@@ -33,6 +33,7 @@ impl Plugin for GamePlugin {
             .add_plugins(chain::plugin)
             .add_plugins(events::plugin)
             .add_plugins(GoldBarTextPlugin)
+            .add_plugins(goldbar_plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
