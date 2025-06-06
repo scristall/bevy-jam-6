@@ -14,17 +14,22 @@ pub fn pirate_spawn_system(
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
             println!("spawned a pirate");
-            wave_state.pirates_spawned += 1;
+            
+            let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
+
             commands.spawn((
                 Pirate,
                 Sprite {
                     image: asset_server.load("images/pirate.png"),
                     ..default()
                 },
-                Transform::from_xyz(-600.0, 0.0, 2.0),
+                Transform::from_xyz(-600.0, y_coord, 2.0),
                 MovementSpeed(100.0),
-                CurrentTarget(vec2(600.0, 0.0))
+                CurrentTarget(vec2(800.0, 0.0))
             ));
+
+            wave_state.pirates_spawned += 1;
+
         }
     }
 }
@@ -43,7 +48,11 @@ pub fn pirate_movement_system(
     mut pirates: Query<(&mut Transform, &MovementSpeed, &CurrentTarget), With<Pirate>>,
 ) {
     for (mut transform, speed, target) in pirates.iter_mut() {
-        transform.translation.x += speed.0 * time.delta().as_secs_f32();
+        let mut target_vec: Vec2 = target.0 - transform.translation.xy();
+        let distance: f32 = speed.0 * time.delta().as_secs_f32();
+        target_vec = target_vec.normalize() * distance;
+        transform.translation.x += target_vec.x;
+        transform.translation.y += target_vec.y;
     }
 }
 
@@ -108,4 +117,4 @@ pub fn wave_control_system(
 pub fn game_over_system(
     mut commands: Commands,
 ) {
-} 
+}

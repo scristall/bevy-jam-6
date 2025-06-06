@@ -1,12 +1,20 @@
 use bevy::prelude::*;
 
+use crate::game::events::{TileEvent, TileMouseDown, TileMouseMove, TileMouseUp};
+
 pub const TILE_SIZE: f32 = 53.0;
 
-#[derive(Component, Debug)]
+pub const GRID_X_START: f32 = -620.0;
+pub const GRID_Y_START: f32 = -200.0;
+
+#[derive(Component, Copy, Clone, Debug)]
 pub struct Tile {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
 }
+
+#[derive(Component, Debug)]
+pub struct BackgroundTile;
 
 impl Tile {
     pub fn contains(&self, cursor: Vec2, transform: &GlobalTransform) -> bool {
@@ -15,6 +23,21 @@ impl Tile {
         let min = pos - size / 2.0;
         let max = pos + size / 2.0;
         min.x < cursor.x && cursor.x <= max.x && min.y < cursor.y && cursor.y <= max.y
+    }
+
+    // check for orthogonally adjacent tiles
+    pub fn is_adjacent(&self, other: &Tile) -> bool {
+        let dx = (self.x - other.x).abs();
+        let dy = (self.y - other.y).abs();
+        (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
+    }
+
+    pub fn grid_coord_to_transform(&self, z: f32) -> Transform {
+        Transform::from_translation(Vec3::new(
+            GRID_X_START + self.x as f32 * TILE_SIZE,
+            GRID_Y_START + self.y as f32 * TILE_SIZE,
+            z,
+        ))
     }
 }
 
@@ -25,55 +48,89 @@ fn setup(
 ) {
     let width = 25;
     let height = 11;
-    let x_start = -620.0;
-    let y_start = -200.0;
 
     let rect = Rectangle::new(TILE_SIZE, TILE_SIZE);
     let color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
 
     for x in 0..width {
         for y in 0..height {
+            let tile = Tile { x, y };
             commands.spawn((
-                Tile { x, y },
+                tile,
+                BackgroundTile,
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
-                Transform::from_translation(Vec3::new(
-                    x_start + x as f32 * TILE_SIZE,
-                    y_start + y as f32 * TILE_SIZE,
-                    1.0,
-                )),
+                tile.grid_coord_to_transform(1.0),
             ));
         }
     }
 }
 
-fn mouse_over(
-    q_tile: Query<(&Tile, &MeshMaterial2d<ColorMaterial>, &GlobalTransform)>,
+fn mouse_events(
+    q_tile: Query<
+        (
+            Entity,
+            &Tile,
+            &MeshMaterial2d<ColorMaterial>,
+            &GlobalTransform,
+        ),
+        With<BackgroundTile>,
+    >,
     q_camera: Query<(&Camera, &GlobalTransform)>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
     mut evr_cursor: EventReader<CursorMoved>,
+    mut evr_tile_mouse_down: EventWriter<TileMouseDown>,
+    mut evr_tile_mouse_up: EventWriter<TileMouseUp>,
+    mut evr_tile_mouse_move: EventWriter<TileMouseMove>,
 ) {
+    let mut found_tile = false;
+
     for event in evr_cursor.read() {
         let cursor = event.position;
         let camera = q_camera.single().unwrap();
 
         let world_cursor_pos = camera.0.viewport_to_world_2d(&camera.1, cursor).unwrap();
 
-        for (tile, material, transform) in q_tile.iter() {
-                let Some(material) = materials.get_mut(material) else {
-                    continue;
-                };
-            if tile.contains(world_cursor_pos, &transform) {
-                material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
-            } else {
+        for (entity, tile, material, transform) in q_tile.iter() {
+            let Some(material) = materials.get_mut(material) else {
+                continue;
+            };
+
+            if !tile.contains(world_cursor_pos, &transform) {
                 material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
+                continue;
             }
-            
+
+            if found_tile {
+                break;
+            }
+
+            found_tile = true;
+
+            material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+
+            if mouse_button.just_pressed(MouseButton::Left) {
+                evr_tile_mouse_down.write(TileMouseDown(TileEvent {
+                    tile: tile.clone(),
+                    entity,
+                }));
+            } else if mouse_button.just_released(MouseButton::Left) {
+                evr_tile_mouse_up.write(TileMouseUp(TileEvent {
+                    tile: tile.clone(),
+                    entity,
+                }));
+            } else {
+                evr_tile_mouse_move.write(TileMouseMove(TileEvent {
+                    tile: tile.clone(),
+                    entity,
+                }));
+            }
         }
     }
 }
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup);
-    app.add_systems(Update, mouse_over);
+    app.add_systems(Update, mouse_events);
 }
