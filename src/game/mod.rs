@@ -10,6 +10,7 @@ mod background;
 mod tile;
 mod chain;
 mod events;
+mod mouse;
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
@@ -21,6 +22,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins(camera::plugin)
+            .add_plugins(mouse::plugin)
             .add_plugins(background::plugin)
             .add_plugins(tile::plugin)
             .add_plugins(chain::plugin)
