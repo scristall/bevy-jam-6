@@ -12,6 +12,10 @@ mod chain;
 mod events;
 mod mouse;
 
+use grid_pathfinding::PathingGrid;
+use grid_util::grid::Grid;
+use grid_util::point::Point;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -56,6 +60,29 @@ fn setup_game(
         SpawnTimer(Timer::from_seconds(game_config.spawn_interval, TimerMode::Repeating)),
         Transform::default(),
     ));
+
+    let mut pathing_grid: PathingGrid = PathingGrid::new(25, 11, false);
+    pathing_grid.allow_diagonal_move = false;
+    pathing_grid.set(5, 5, true);
+    pathing_grid.set(5, 6, true);
+    pathing_grid.set(5, 7, true);
+    pathing_grid.generate_components();
+    println!("{}", pathing_grid);
+    let start = Point::new(0, 6);
+    let end = Point::new(24, 6);
+    let path: Option<Vec<Point>> = pathing_grid
+        .get_path_single_goal(start, end, false);
+    
+    match path {
+        Some(val) => {
+
+            println!("Path:");
+            for point in val {
+                println!("{:?}", point);
+            }
+        },
+        None => println!("No Path")
+    }
     
     // TODO: Spawn initial grid of tiles
     // TODO: Spawn gold
