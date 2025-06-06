@@ -5,7 +5,7 @@ use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::tile::{TILE_SIZE, Tile};
 
-const CHAIN_IN_INVENTORY_SIZE: f32 = 64.0;
+pub const CHAIN_BUTTON_SIZE: f32 = 64.0;
 
 #[derive(Component, Debug)]
 pub struct Chain {
@@ -15,17 +15,20 @@ pub struct Chain {
 #[derive(Component, Debug)]
 pub struct MainInventory;
 
+#[derive(Component, Debug, Default)]
+pub struct MainInventoryChainButton;
+
 #[derive(Component, Debug)]
-pub struct ChainInInventory {
-    stock: u32,
-    length: u32,
+pub struct ChainButton {
+    pub stock: u32,
+    pub length: u32,
 }
 
 #[derive(Component, Debug)]
-pub struct ChainInInventoryStock;
+pub struct ChainButtonStock;
 
 #[derive(Component, Debug)]
-pub struct ChainInInventoryLength;
+pub struct ChainButtonLength;
 
 #[derive(Component, Debug)]
 pub struct SelectedChain;
@@ -60,7 +63,7 @@ fn spawn_chain_segment(
     });
 }
 
-pub fn spawn_chain_in_inventory(
+pub fn spawn_chain_button<T: Component + Default>(
     commands: &mut Commands,
     e_parent: Entity,
     stock: u32,
@@ -76,15 +79,17 @@ pub fn spawn_chain_in_inventory(
     };
 
     commands.entity(e_parent).with_children(|parent| {
+        let t: T = T::default();
         parent
             .spawn((
+                t,
                 Sprite::from_image(asset_server.load("images/chain.png")),
-                ChainInInventory { stock, length },
+                ChainButton { stock, length },
                 Transform::from_xyz(pos.x, pos.y, 0.0),
             ))
             .with_children(|parent| {
                 parent.spawn((
-                    ChainInInventoryStock,
+                    ChainButtonStock,
                     Text2d::new(format!("{}", stock)),
                     text_font.clone(),
                     Transform::from_xyz(30.0, 30.0, 0.5),
@@ -92,7 +97,7 @@ pub fn spawn_chain_in_inventory(
                 ));
 
                 parent.spawn((
-                    ChainInInventoryLength,
+                    ChainButtonLength,
                     Text2d::new(format!("{}", length)),
                     text_font.clone(),
                     Transform::from_xyz(-30.0, -30.0, 0.5),
@@ -102,28 +107,31 @@ pub fn spawn_chain_in_inventory(
     });
 }
 
-fn mouse_down_on_chain_in_inventory(
+fn mouse_down_on_chain_button_in_inventory(
     mut commands: Commands,
     mouse_pos: Res<MousePos>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut q_unselected_chain: Query<
-        (Entity, &ChainInInventory, &mut Sprite, &GlobalTransform),
-        Without<SelectedChain>,
+        (Entity, &ChainButton, &mut Sprite, &GlobalTransform),
+        (With<MainInventoryChainButton>, Without<SelectedChain>),
     >,
-    mut q_selected_chain: Query<(
-        Entity,
-        &SelectedChain,
-        &mut Sprite,
-        &GlobalTransform,
-        &ChainInInventory,
-    )>,
+    mut q_selected_chain: Query<
+        (
+            Entity,
+            &SelectedChain,
+            &mut Sprite,
+            &GlobalTransform,
+            &ChainButton,
+        ),
+        With<MainInventoryChainButton>,
+    >,
 ) {
     let mut new_chain_selected = false;
 
     for (entity, _, mut sprite, transform) in q_unselected_chain.iter_mut() {
         if mouse_pos.is_in(
             transform.translation().truncate(),
-            Vec2::splat(CHAIN_IN_INVENTORY_SIZE),
+            Vec2::splat(CHAIN_BUTTON_SIZE),
         ) {
             if mouse_button.just_pressed(MouseButton::Left) {
                 sprite.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
@@ -156,7 +164,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
             Visibility::Visible,
         ))
         .id();
-    spawn_chain_in_inventory(
+    spawn_chain_button::<MainInventoryChainButton>(
         &mut commands,
         e_main_inventory,
         1,
@@ -164,7 +172,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
         &mut asset_server,
         Vec2::new(-300.0, -400.0),
     );
-    spawn_chain_in_inventory(
+    spawn_chain_button::<MainInventoryChainButton>(
         &mut commands,
         e_main_inventory,
         1,
@@ -172,7 +180,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
         &mut asset_server,
         Vec2::new(0.0, -400.0),
     );
-    spawn_chain_in_inventory(
+    spawn_chain_button::<MainInventoryChainButton>(
         &mut commands,
         e_main_inventory,
         2,
@@ -188,7 +196,7 @@ fn begin_chain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     q_dragging_chain: Query<&DraggingChain>,
-    q_selected_chain: Query<(&SelectedChain, &ChainInInventory), Without<DraggingChain>>,
+    q_selected_chain: Query<(&SelectedChain, &ChainButton), Without<DraggingChain>>,
     q_chain_segments: Query<&ChainSegment>,
 ) {
     // if there is a chain already being dragged, do nothing
@@ -299,8 +307,8 @@ fn end_chain(
     mut commands: Commands,
     mut tile_mouse_up_events: EventReader<TileMouseUp>,
     q_dragging_chain: Query<(Entity, &DraggingChain)>,
-    mut q_selected_chain: Query<(&mut ChainInInventory, &Children), With<SelectedChain>>,
-    mut q_stock_text: Query<&mut Text2d, With<ChainInInventoryStock>>,
+    mut q_selected_chain: Query<(&mut ChainButton, &Children), With<SelectedChain>>,
+    mut q_stock_text: Query<&mut Text2d, With<ChainButtonStock>>,
 ) {
     for _ in tile_mouse_up_events.read() {
         // remove any dragging chains (should only be one, but lets be safe)
@@ -329,7 +337,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            mouse_down_on_chain_in_inventory,
+            mouse_down_on_chain_button_in_inventory,
             begin_chain,
             drag_chain,
             end_chain,
