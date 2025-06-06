@@ -16,10 +16,12 @@ mod mouse;
 mod pirate;
 mod tile;
 mod goldbar_text;
+mod ship;
 
 use crate::game::game_state::GameState;
 use crate::game::goldbar::{Gold, spawn_gold_bars, plugin as goldbar_plugin};
 use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
+use crate::game::ship::{spawn_ship, move_ship};
 
 pub struct GamePlugin;
 
@@ -40,7 +42,7 @@ impl Plugin for GamePlugin {
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
             // Add startup systems
-            .add_systems(Startup, setup_game)
+            .add_systems(Startup, (setup_game, spawn_ship))
             // Add gameplay systems
             .add_systems(
                 Update,
@@ -53,6 +55,7 @@ impl Plugin for GamePlugin {
                     ui_update_system,
                     wave_control_system,
                     game_over_system,
+                    move_ship,
                 ),
             );
     }
