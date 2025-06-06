@@ -36,6 +36,7 @@ impl Plugin for GamePlugin {
             .add_plugins(events::plugin)
             .add_plugins(pirate::plugin)
             .add_plugins(prizes::plugin)
+            .add_plugins(ship::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
             // Add resources
