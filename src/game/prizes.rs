@@ -139,13 +139,7 @@ fn mouse_down_on_chain_button_in_prize_window(
     }
 }
 
-// temporary for testing
-fn setup(mut commands: Commands, mut evw_wave_complete: EventWriter<WaveComplete>) {
-    evw_wave_complete.write(WaveComplete);
-}
-
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, setup);
     app.add_systems(
         Update,
         (on_wave_complete, mouse_down_on_chain_button_in_prize_window)
