@@ -5,14 +5,17 @@ use bevy::prelude::*;
 use components::*;
 use systems::*;
 
-mod camera;
 mod background;
-mod tile;
+mod camera;
 mod chain;
+mod controls;
 mod events;
-mod mouse;
+mod game_state;
 mod goldbar;
+mod mouse;
+mod tile;
 
+use crate::game::game_state::GameState;
 use crate::game::goldbar::{Gold, spawn_gold_bars};
 
 use grid_pathfinding::PathingGrid;
@@ -23,7 +26,8 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app
+        app.init_state::<GameState>()
+            .add_plugins(controls::plugin)
             .add_plugins(camera::plugin)
             .add_plugins(mouse::plugin)
             .add_plugins(background::plugin)
@@ -33,23 +37,24 @@ impl Plugin for GamePlugin {
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
-
             // Add startup systems
             .add_systems(Startup, setup_game)
-
             // Add gameplay systems
-            .add_systems(Update, (
-                pirate_spawn_system,
-                pathfinding_system,
-                pirate_movement_system,
-                oxygen_drain_system,
-                death_system,
-                goal_reached_system,
-                chain_placement_system,
-                ui_update_system,
-                wave_control_system,
-                game_over_system,
-            ));
+            .add_systems(
+                Update,
+                (
+                    pirate_spawn_system,
+                    pathfinding_system,
+                    pirate_movement_system,
+                    oxygen_drain_system,
+                    death_system,
+                    goal_reached_system,
+                    chain_placement_system,
+                    ui_update_system,
+                    wave_control_system,
+                    game_over_system,
+                ),
+            );
     }
 }
 
@@ -61,7 +66,10 @@ fn setup_game(
     // Spawn spawner
     commands.spawn((
         Spawner,
-        SpawnTimer(Timer::from_seconds(game_config.spawn_interval, TimerMode::Repeating)),
+        SpawnTimer(Timer::from_seconds(
+            game_config.spawn_interval,
+            TimerMode::Repeating,
+        )),
         Transform::default(),
     ));
 
@@ -74,20 +82,18 @@ fn setup_game(
     println!("{}", pathing_grid);
     let start = Point::new(0, 6);
     let end = Point::new(24, 6);
-    let path: Option<Vec<Point>> = pathing_grid
-        .get_path_single_goal(start, end, false);
-    
+    let path: Option<Vec<Point>> = pathing_grid.get_path_single_goal(start, end, false);
+
     match path {
         Some(val) => {
-
             println!("Path:");
             for point in val {
                 println!("{:?}", point);
             }
-        },
-        None => println!("No Path")
+        }
+        None => println!("No Path"),
     }
-    
+
     // TODO: Spawn initial grid of tiles
 
     // Spawn gold bars
