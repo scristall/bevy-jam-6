@@ -15,6 +15,7 @@ mod mouse;
 mod pirate;
 mod tile;
 mod prizes;
+mod music;
 
 use crate::game::game_state::GameState;
 use crate::game::goldbar::{Gold, plugin as goldbar_plugin, spawn_gold_bars};
@@ -36,6 +37,7 @@ impl Plugin for GamePlugin {
             .add_plugins(prizes::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
+            .add_plugins(music::plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
