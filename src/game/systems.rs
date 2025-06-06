@@ -23,7 +23,7 @@ pub fn pirate_spawn_system(
                     image: asset_server.load("images/pirate.png"),
                     ..default()
                 },
-                Transform::from_xyz(-600.0, y_coord, 2.0),
+                Transform::from_xyz(-600.0, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
                 MovementSpeed(100.0),
                 CurrentTarget(vec2(800.0, 0.0))
             ));
