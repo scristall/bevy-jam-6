@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use bevy::prelude::*;
 use crate::game::components::*;
 

@@ -10,7 +10,17 @@ impl Default for MousePos {
 }
 
 impl MousePos {
-    pub fn contains(&self, rect: Rect) -> bool {
+    pub fn is_in_rect(&self, rect: Rect) -> bool {
+        rect.contains(self.0)
+    }
+
+    pub fn is_in(&self, pos: Vec2, size: f32) -> bool {
+        let rect = Rect::new(
+            pos.x - size / 2.0,
+            pos.y - size / 2.0,
+            pos.x + size / 2.0,
+            pos.y + size / 2.0,
+        );
         rect.contains(self.0)
     }
 }

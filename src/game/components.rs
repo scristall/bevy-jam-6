@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use bevy::prelude::*;
 
 // Pirate components
