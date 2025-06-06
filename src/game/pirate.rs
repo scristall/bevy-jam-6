@@ -79,6 +79,18 @@ fn pirate_movement_system(
         pathing_grid.set(chain_seg.0.x as usize, chain_seg.0.y as usize, true);
     }
 
+    pathing_grid.set(25, 0, true);
+    pathing_grid.set(25, 1, true);
+    pathing_grid.set(25, 2, true);
+    pathing_grid.set(25, 3, true);
+    pathing_grid.set(25, 4, true);
+    pathing_grid.set(25, 6, true);
+    pathing_grid.set(25, 7, true);
+    pathing_grid.set(25, 8, true);
+    pathing_grid.set(25, 9, true);
+    pathing_grid.set(25, 10, true);
+
+
     pathing_grid.generate_components();
 
 
