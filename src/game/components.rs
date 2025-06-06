@@ -2,9 +2,6 @@
 
 use bevy::prelude::*;
 
-// Pirate components
-#[derive(Component)]
-pub struct Pirate;
 
 #[derive(Component)]
 pub struct Oxygen(pub f32);
