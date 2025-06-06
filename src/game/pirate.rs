@@ -139,7 +139,7 @@ fn pirate_movement_system(
 
         let path: Option<Vec<Point>> = pathing_grid.get_path_single_goal(start, end, false);
 
-        match &path {
+        let target_vec: Vec2 = match &path {
             Some(val) => {
                 let closest_point_index: usize =
                     find_closest_point_idx(val, transform.translation.xy());
@@ -149,23 +149,16 @@ fn pirate_movement_system(
                     target_point = val[closest_point_index + 1];
                 }
 
-                let target_vec: Vec2 = grid_coord_to_transform(&target_point);
+                grid_coord_to_transform(&target_point)
+            }
+            None => grid_coord_to_transform(&end)
+        };
 
-                let mut direction_vec: Vec2 = target_vec - pirate_location;
-                let distance: f32 = speed.0 * time.delta().as_secs_f32();
-                direction_vec = direction_vec.normalize() * distance;
-                transform.translation.x += direction_vec.x;
-                transform.translation.y += direction_vec.y;
-            }
-            None => {
-                let target_vec: Vec2 = grid_coord_to_transform(&end);
-                let mut direction_vec: Vec2 = target_vec - pirate_location;
-                let distance: f32 = speed.0 * time.delta().as_secs_f32();
-                direction_vec = direction_vec.normalize() * distance;
-                transform.translation.x += direction_vec.x;
-                transform.translation.y += direction_vec.y;
-            }
-        }
+        let mut direction_vec: Vec2 = target_vec - pirate_location;
+        let distance: f32 = speed.0 * time.delta().as_secs_f32();
+        direction_vec = direction_vec.normalize() * distance;
+        transform.translation.x += direction_vec.x;
+        transform.translation.y += direction_vec.y;
     }
 }
 
