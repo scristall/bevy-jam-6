@@ -9,6 +9,7 @@ pub fn pirate_spawn_system(
     game_config: Res<GameConfig>,
     mut wave_state: ResMut<WaveState>,
 ) {
+    println!("pirate_spawn_system");
     for (mut timer, transform) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
@@ -58,7 +59,6 @@ pub fn death_system(
 }
 
 pub fn goal_reached_system(
-    mut game_state: ResMut<NextState<GameState>>,
     pirates: Query<&Transform, With<Pirate>>,
     gold: Query<&Transform, With<Gold>>,
 ) {
@@ -97,9 +97,5 @@ pub fn wave_control_system(
 
 pub fn game_over_system(
     mut commands: Commands,
-    game_state: Res<State<GameState>>,
 ) {
-    if game_state.get() == &GameState::GameOver {
-        // TODO: Implement game over UI
-    }
 } 

@@ -29,7 +29,7 @@ fn setup(
     let y_start = -200.0;
 
     let rect = Rectangle::new(TILE_SIZE, TILE_SIZE);
-    let color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+    let color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
 
     for x in 0..width {
         for y in 0..height {
@@ -60,17 +60,15 @@ fn mouse_over(
         let world_cursor_pos = camera.0.viewport_to_world_2d(&camera.1, cursor).unwrap();
 
         for (tile, material, transform) in q_tile.iter() {
-            if tile.contains(world_cursor_pos, &transform) {
                 let Some(material) = materials.get_mut(material) else {
                     continue;
                 };
-
-                println!("world_cursor_pos: {:?}", world_cursor_pos);
-                println!("tile: {:?}", tile);
-                println!("transform: {:?}", transform.translation());
-
-                material.color = Color::linear_rgba(0.0, 0.0, 1.0, 0.0);
+            if tile.contains(world_cursor_pos, &transform) {
+                material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+            } else {
+                material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
             }
+            
         }
     }
 }

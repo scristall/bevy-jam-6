@@ -8,6 +8,8 @@ use systems::*;
 mod camera;
 mod background;
 mod tile;
+mod chain;
+mod events;
 
 pub struct GamePlugin;
 
@@ -17,6 +19,8 @@ impl Plugin for GamePlugin {
             .add_plugins(camera::plugin)
             .add_plugins(background::plugin)
             .add_plugins(tile::plugin)
+            .add_plugins(chain::plugin)
+            .add_plugins(events::plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
@@ -36,7 +40,7 @@ impl Plugin for GamePlugin {
                 ui_update_system,
                 wave_control_system,
                 game_over_system,
-            ).run_if(in_state(GameState::Playing)));
+            ));
     }
 }
 
