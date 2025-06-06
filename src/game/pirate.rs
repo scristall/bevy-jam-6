@@ -180,8 +180,6 @@ pub fn pirate_spawn_system(
     for (mut timer, transform) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
-            println!("spawned a pirate");
-
             let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
 
             commands.spawn((
