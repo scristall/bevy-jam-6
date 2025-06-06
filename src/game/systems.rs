@@ -1,39 +1,7 @@
 use bevy::prelude::*;
 use crate::game::chain::ChainSegment;
 use crate::game::components::*;
-
-// Core Gameplay Systems
-pub fn pirate_spawn_system(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut spawners: Query<(&mut SpawnTimer, &Transform), With<Spawner>>,
-    game_config: Res<GameConfig>,
-    mut wave_state: ResMut<WaveState>,
-    asset_server: Res<AssetServer>
-) {
-    for (mut timer, transform) in spawners.iter_mut() {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
-            println!("spawned a pirate");
-            
-            let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
-
-            commands.spawn((
-                Pirate,
-                Sprite {
-                    image: asset_server.load("images/pirate.png"),
-                    ..default()
-                },
-                Transform::from_xyz(-600.0, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
-                MovementSpeed(100.0),
-                CurrentTarget(vec2(800.0, 0.0))
-            ));
-
-            wave_state.pirates_spawned += 1;
-
-        }
-    }
-}
+use crate::game::pirate::{Pirate};
 
 pub fn pathfinding_system(
     mut pirates: Query<(&Transform, &Path, &CurrentTarget), With<Pirate>>,

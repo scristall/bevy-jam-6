@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-// Pirate components
-#[derive(Component)]
-pub struct Pirate;
 
 #[derive(Component)]
 pub struct Oxygen(pub f32);
@@ -18,10 +15,7 @@ pub struct CurrentTarget(pub Vec2);
 
 // Tile components
 #[derive(Component)]
-pub struct Tile{
-    pub x: i32,
-    pub y: i32,
-}
+pub struct Tile;
 
 #[derive(Component)]
 pub struct Position(pub IVec2);

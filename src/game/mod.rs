@@ -37,7 +37,6 @@ impl Plugin for GamePlugin {
 
             // Add gameplay systems
             .add_systems(Update, (
-                pirate_spawn_system,
                 pathfinding_system,
                 oxygen_drain_system,
                 death_system,
