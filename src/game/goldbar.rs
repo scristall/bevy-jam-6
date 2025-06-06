@@ -4,7 +4,7 @@ use crate::game::components::{Position, TileType};
 use crate::game::goldbar_text::GoldAmount;
 use crate::game::events::{GoldBarCollected, GoldBarDropped};
 
-pub const TOTAL_GOLD_BARS: i32 = 18;
+pub const TOTAL_GOLD_BARS: i32 = 4;
 pub const GOLD_ROOM_X: i32 = 27;
 pub const GOLD_ROOM_Y: i32 = 0;
 
@@ -67,9 +67,9 @@ fn handle_gold_collected(
 ) {
     for event in gold_collected_events.read() {
         for tile in gold_bars.iter() {
-            if *tile == event.0.tile {
+            if *tile == event.tile {
                 // despawn the gold bar
-                despawn_gold_bar(&mut commands, event.0.entity, &mut gold_amount);
+                despawn_gold_bar(&mut commands, event.entity, &mut gold_amount);
             }
         }
     }
@@ -83,7 +83,7 @@ fn handle_gold_dropped(
 ) {
     for event in gold_dropped_events.read() {
         // Spawn a new gold bar at the tile position
-        let pos = IVec2::new(event.0.tile.x, event.0.tile.y);
+        let pos = IVec2::new(event.tile.x, event.tile.y);
         spawn_gold_bar(&mut commands, &asset_server, pos, &mut gold_amount);
     }
 }
