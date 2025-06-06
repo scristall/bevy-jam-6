@@ -1,0 +1,49 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Game Type: Pixel-art tower defense game (top-down), themed as the hold of a ship.
+Platform: Built in Rust with Bevy 0.16 — avoid outdated engine-specific advice.
+Visual Layout:
+
+    Left edge: water + pirate spawn point (boats)
+
+    Right edge: gold vault (defend this)
+
+    Central area: grid-based layout where player places chain tiles to form a maze
+
+Core Gameplay Mechanics:
+
+    Enemies (Pirates) spawn on the left and attempt to reach gold on the right.
+
+    Player builds a maze of chain tiles to force pirates to take longer routes.
+
+    Pirates lose oxygen as they crawl through the maze. They die if oxygen hits 0.
+
+    Player cannot fully block the pirates; every placement must preserve a valid path to the goal.
+
+Technical Notes:
+
+    A* is used for pirate pathfinding.
+
+    Placement validation must simulate the chain being placed, then check for a valid path from entrance to goal.
+
+    Use higher movement costs for chain tiles instead of blocking them outright (allows for more interesting pathing decisions).
+
+    Pathfinding should support checking tile costs and dynamic updates as the maze changes.
+
+Design Vibes:
+
+    Inspired by Starcraft 1 / Warcraft 3 custom tower defense maps.
+
+    Gameplay is about clever maze construction and oxygen management.
+
+    Visuals are pixel-based, old-school and atmospheric.
+
+What to Avoid:
+
+    Dont generate Bevy-specific code without explicit request.
+
+    Bevy 0.16 syntax and APIs are rapidly changing — stay engine-agnostic unless instructed. This is a game jam submission for Bevy Game Jam 6.
+

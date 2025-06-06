@@ -5,11 +5,18 @@ use bevy::prelude::*;
 use components::*;
 use systems::*;
 
+mod camera;
+mod background;
+mod tile;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_plugins(camera::plugin)
+            .add_plugins(background::plugin)
+            .add_plugins(tile::plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
@@ -37,9 +44,6 @@ fn setup_game(
     mut commands: Commands,
     game_config: Res<GameConfig>,
 ) {
-    // Spawn camera
-    commands.spawn(Camera2d);
-    
     // Spawn spawner
     commands.spawn((
         Spawner,
