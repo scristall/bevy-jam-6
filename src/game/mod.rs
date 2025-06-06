@@ -15,7 +15,7 @@ mod goldbar;
 mod goldbar_text;
 
 use crate::game::goldbar::{Gold, spawn_gold_bars};
-use crate::game::goldbar_text::GoldBarTextPlugin;
+use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
@@ -60,6 +60,7 @@ fn setup_game(
     mut commands: Commands,
     game_config: Res<GameConfig>,
     asset_server: Res<AssetServer>,
+    mut gold_amount: ResMut<GoldAmount>,
 ) {
     // Spawn spawner
     commands.spawn((
@@ -94,7 +95,7 @@ fn setup_game(
     // TODO: Spawn initial grid of tiles
 
     // Spawn gold bars
-    spawn_gold_bars(&mut commands, &asset_server);
+    spawn_gold_bars(&mut commands, &asset_server, gold_amount);
 
     // TODO: Setup UI
 }
