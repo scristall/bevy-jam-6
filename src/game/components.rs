@@ -84,7 +84,7 @@ impl Default for GameConfig {
     fn default() -> Self {
         Self {
             grid_size: IVec2::new(20, 15),
-            spawn_interval: 5.0,
+            spawn_interval: 2.0,
             initial_oxygen: 100.0,
             base_movement_speed: 2.0,
             game_state: GameState::Playing,

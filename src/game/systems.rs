@@ -8,13 +8,23 @@ pub fn pirate_spawn_system(
     mut spawners: Query<(&mut SpawnTimer, &Transform), With<Spawner>>,
     game_config: Res<GameConfig>,
     mut wave_state: ResMut<WaveState>,
+    asset_server: Res<AssetServer>
 ) {
-    println!("pirate_spawn_system");
     for (mut timer, transform) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
-            // TODO: Implement pirate spawning
+            println!("spawned a pirate");
             wave_state.pirates_spawned += 1;
+            commands.spawn((
+                Pirate,
+                Sprite {
+                    image: asset_server.load("images/pirate.png"),
+                    ..default()
+                },
+                Transform::from_xyz(-600.0, 0.0, 2.0),
+                MovementSpeed(100.0),
+                CurrentTarget(vec2(600.0, 0.0))
+            ));
         }
     }
 }
@@ -33,7 +43,7 @@ pub fn pirate_movement_system(
     mut pirates: Query<(&mut Transform, &MovementSpeed, &CurrentTarget), With<Pirate>>,
 ) {
     for (mut transform, speed, target) in pirates.iter_mut() {
-        // TODO: Implement movement towards target
+        transform.translation.x += speed.0 * time.delta().as_secs_f32();
     }
 }
 
