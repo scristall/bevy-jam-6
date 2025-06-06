@@ -13,16 +13,13 @@ mod events;
 mod game_state;
 mod goldbar;
 mod mouse;
+mod pirate;
 mod tile;
 mod goldbar_text;
 
 use crate::game::game_state::GameState;
 use crate::game::goldbar::{Gold, spawn_gold_bars, plugin as goldbar_plugin};
 use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
-
-use grid_pathfinding::PathingGrid;
-use grid_util::grid::Grid;
-use grid_util::point::Point;
 
 pub struct GamePlugin;
 
@@ -36,6 +33,7 @@ impl Plugin for GamePlugin {
             .add_plugins(tile::plugin)
             .add_plugins(chain::plugin)
             .add_plugins(events::plugin)
+            .add_plugins(pirate::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
             // Add resources
@@ -47,9 +45,7 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
-                    pirate_spawn_system,
                     pathfinding_system,
-                    pirate_movement_system,
                     oxygen_drain_system,
                     death_system,
                     goal_reached_system,
@@ -77,27 +73,6 @@ fn setup_game(
         )),
         Transform::default(),
     ));
-
-    let mut pathing_grid: PathingGrid = PathingGrid::new(25, 11, false);
-    pathing_grid.allow_diagonal_move = false;
-    pathing_grid.set(5, 5, true);
-    pathing_grid.set(5, 6, true);
-    pathing_grid.set(5, 7, true);
-    pathing_grid.generate_components();
-    println!("{}", pathing_grid);
-    let start = Point::new(0, 6);
-    let end = Point::new(24, 6);
-    let path: Option<Vec<Point>> = pathing_grid.get_path_single_goal(start, end, false);
-
-    match path {
-        Some(val) => {
-            println!("Path:");
-            for point in val {
-                println!("{:?}", point);
-            }
-        }
-        None => println!("No Path"),
-    }
 
     // TODO: Spawn initial grid of tiles
 
