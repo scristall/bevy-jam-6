@@ -115,6 +115,7 @@ fn drag_chain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut q_dragging_chain: Query<(&mut DraggingChain, &mut ChainSegment)>,
+    q_chain_segments: Query<&ChainSegment, Without<DraggingChain>>,
 ) {
     // get the dragging chain
     if q_dragging_chain.single().is_err() {
@@ -132,6 +133,14 @@ fn drag_chain(
     for event in tile_mouse_move_events.read() {
         // make sure the tile is in an adjacent tile to the current chain segment
         if !current_chain_segment.0.is_adjacent(&event.0.tile) {
+            continue;
+        }
+
+        // make sure the tile is not already in the chain
+        if q_chain_segments
+            .iter()
+            .any(|segment| segment.0 == event.0.tile)
+        {
             continue;
         }
 

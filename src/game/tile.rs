@@ -1,20 +1,23 @@
 use bevy::prelude::*;
 
 use crate::game::events::{TileEvent, TileMouseDown, TileMouseMove, TileMouseUp};
+use crate::game::mouse::MousePos;
 
 pub const TILE_SIZE: f32 = 53.0;
 
 pub const GRID_X_START: f32 = -620.0;
 pub const GRID_Y_START: f32 = -200.0;
 
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Debug, PartialEq)]
 pub struct Tile {
     pub x: i32,
     pub y: i32,
 }
 
 #[derive(Component, Debug)]
-pub struct BackgroundTile;
+pub struct BackgroundTile {
+    pub is_hovered: bool,
+}
 
 impl Tile {
     pub fn contains(&self, cursor: Vec2, transform: &GlobalTransform) -> bool {
@@ -57,7 +60,7 @@ fn setup(
             let tile = Tile { x, y };
             commands.spawn((
                 tile,
-                BackgroundTile,
+                BackgroundTile { is_hovered: false },
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
                 tile.grid_coord_to_transform(1.0),
@@ -67,66 +70,57 @@ fn setup(
 }
 
 fn mouse_events(
-    q_tile: Query<
+    mut q_tile: Query<
         (
             Entity,
             &Tile,
+            &mut BackgroundTile,
             &MeshMaterial2d<ColorMaterial>,
             &GlobalTransform,
         ),
         With<BackgroundTile>,
     >,
-    q_camera: Query<(&Camera, &GlobalTransform)>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
-    mut evr_cursor: EventReader<CursorMoved>,
+    mouse_pos: Res<MousePos>,
     mut evr_tile_mouse_down: EventWriter<TileMouseDown>,
     mut evr_tile_mouse_up: EventWriter<TileMouseUp>,
     mut evr_tile_mouse_move: EventWriter<TileMouseMove>,
 ) {
-    let mut found_tile = false;
+    for (entity, tile, mut background_tile, material, transform) in q_tile.iter_mut() {
+        let Some(material) = materials.get_mut(material) else {
+            continue;
+        };
 
-    for event in evr_cursor.read() {
-        let cursor = event.position;
-        let camera = q_camera.single().unwrap();
-
-        let world_cursor_pos = camera.0.viewport_to_world_2d(&camera.1, cursor).unwrap();
-
-        for (entity, tile, material, transform) in q_tile.iter() {
-            let Some(material) = materials.get_mut(material) else {
-                continue;
-            };
-
-            if !tile.contains(world_cursor_pos, &transform) {
-                material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
-                continue;
-            }
-
-            if found_tile {
-                break;
-            }
-
-            found_tile = true;
-
-            material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
-
-            if mouse_button.just_pressed(MouseButton::Left) {
-                evr_tile_mouse_down.write(TileMouseDown(TileEvent {
-                    tile: tile.clone(),
-                    entity,
-                }));
-            } else if mouse_button.just_released(MouseButton::Left) {
-                evr_tile_mouse_up.write(TileMouseUp(TileEvent {
-                    tile: tile.clone(),
-                    entity,
-                }));
-            } else {
-                evr_tile_mouse_move.write(TileMouseMove(TileEvent {
-                    tile: tile.clone(),
-                    entity,
-                }));
-            }
+        if !tile.contains(mouse_pos.0, &transform) {
+            material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
+            background_tile.is_hovered = false;
+            continue;
         }
+
+        if mouse_button.just_pressed(MouseButton::Left) {
+            evr_tile_mouse_down.write(TileMouseDown(TileEvent {
+                tile: tile.clone(),
+                entity,
+            }));
+        } else if mouse_button.just_released(MouseButton::Left) {
+            evr_tile_mouse_up.write(TileMouseUp(TileEvent {
+                tile: tile.clone(),
+                entity,
+            }));
+        }
+
+        if background_tile.is_hovered {
+            continue;
+        }
+
+        background_tile.is_hovered = true;
+
+        material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+        evr_tile_mouse_move.write(TileMouseMove(TileEvent {
+            tile: tile.clone(),
+            entity,
+        }));
     }
 }
 
