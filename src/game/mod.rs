@@ -14,11 +14,9 @@ mod game_state;
 mod goldbar;
 mod mouse;
 mod tile;
-mod goldbar;
 mod goldbar_text;
 
 use crate::game::game_state::GameState;
-use crate::game::goldbar::{Gold, spawn_gold_bars};
 use crate::game::goldbar::{Gold, spawn_gold_bars, plugin as goldbar_plugin};
 use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
 
