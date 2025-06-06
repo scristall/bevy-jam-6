@@ -12,6 +12,7 @@ mod chain;
 mod events;
 mod mouse;
 mod goldbar;
+mod pirate;
 
 use crate::game::goldbar::{Gold, spawn_gold_bars};
 
@@ -26,6 +27,7 @@ impl Plugin for GamePlugin {
             .add_plugins(tile::plugin)
             .add_plugins(chain::plugin)
             .add_plugins(events::plugin)
+            .add_plugins(pirate::plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
@@ -37,7 +39,6 @@ impl Plugin for GamePlugin {
             .add_systems(Update, (
                 pirate_spawn_system,
                 pathfinding_system,
-                pirate_movement_system,
                 oxygen_drain_system,
                 death_system,
                 goal_reached_system,
