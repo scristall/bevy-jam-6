@@ -114,31 +114,27 @@ fn mouse_down_on_chain_in_inventory(
     let mut new_chain_selected = false;
 
     for (entity, _, mut sprite, transform) in q_unselected_chain.iter_mut() {
-        let rect = Rect::new(
-            transform.translation().x,
-            transform.translation().y,
-            CHAIN_IN_INVENTORY_SIZE,
-            CHAIN_IN_INVENTORY_SIZE,
-        );
-        if mouse_pos.contains(rect) {
-            sprite.color = Color::linear_rgba(1.0, 0.0, 0.0, 1.0);
-        }
-        if mouse_button.just_pressed(MouseButton::Left) {
-            commands.entity(entity).insert(SelectedChain);
-            new_chain_selected = true;
+        if mouse_pos.is_in(transform.translation().truncate(), CHAIN_IN_INVENTORY_SIZE) {
+            if mouse_button.just_pressed(MouseButton::Left) {
+                sprite.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+                commands.entity(entity).insert(SelectedChain);
+                new_chain_selected = true;
+                break;
+            } else {
+                sprite.color = Color::linear_rgba(0.0, 0.0, 1.0, 1.0);
+            }
+        } else {
+            sprite.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
         }
     }
 
-    for (entity, _, mut sprite, transform, chain_in_inventory) in q_selected_chain.iter_mut() {
-        let rect = Rect::new(
-            transform.translation().x,
-            transform.translation().y,
-            CHAIN_IN_INVENTORY_SIZE,
-            CHAIN_IN_INVENTORY_SIZE,
-        );
-        if !mouse_pos.contains(rect) {
-            commands.entity(entity).remove::<SelectedChain>();
-        }
+    if !new_chain_selected {
+        return;
+    }
+
+    for (entity, _, mut sprite, _, _) in q_selected_chain.iter_mut() {
+        sprite.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
+        commands.entity(entity).remove::<SelectedChain>();
     }
 }
 
@@ -185,6 +181,11 @@ fn begin_chain(
     }
 
     let (_, chain_in_inventory) = q_selected_chain.single().unwrap();
+
+    // if there is no stock, do nothing
+    if chain_in_inventory.stock == 0 {
+        return;
+    }
 
     // if there is a tile clicked, create a new chain
     for event in tile_clicked_events.read() {
@@ -269,22 +270,34 @@ fn end_chain(
     mut commands: Commands,
     mut tile_mouse_up_events: EventReader<TileMouseUp>,
     q_dragging_chain: Query<(Entity, &DraggingChain)>,
+    mut q_selected_chain: Query<(&mut ChainInInventory, &Children), With<SelectedChain>>,
+    mut q_stock_text: Query<&mut Text2d, With<ChainInInventoryStock>>,
 ) {
     for _ in tile_mouse_up_events.read() {
         // remove any dragging chains (should only be one, but lets be safe)
         for (entity, dragging_chain) in q_dragging_chain.iter() {
+            commands.entity(entity).despawn();
+
             // if we didn't finish the chain, remove it
             if dragging_chain.remaining_length > 0 {
                 commands.entity(dragging_chain.e_chain).despawn();
+            } else {
+                // We placed a chain, update the stock
+                let (mut chain_in_inventory, children) = q_selected_chain.single_mut().unwrap();
+                chain_in_inventory.stock -= 1;
+                for child in children.iter() {
+                    if let Ok(mut text) = q_stock_text.get_mut(child) {
+                        text.0 = format!("{}", chain_in_inventory.stock);
+                    }
+                }
             }
-
-            commands.entity(entity).despawn();
         }
     }
 }
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup);
+    app.add_systems(Update, mouse_down_on_chain_in_inventory);
     app.add_systems(Update, begin_chain);
     app.add_systems(Update, drag_chain);
     app.add_systems(Update, end_chain);
