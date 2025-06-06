@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::tile::Tile;
+use crate::game::goldbar::Gold;
 
 pub struct TileEvent {
     pub tile: Tile,
@@ -17,10 +18,16 @@ pub struct TileMouseUp(pub TileEvent);
 pub struct TileMouseMove(pub TileEvent);
 
 #[derive(Event)]
-pub struct GoldBarCollected(pub TileEvent);
+pub struct GoldBarCollected {
+    pub tile: Tile,
+    pub entity: Entity,
+}
 
 #[derive(Event)]
-pub struct GoldBarDropped(pub TileEvent);
+pub struct GoldBarDropped {
+    pub tile: Tile,
+    pub entity: Entity,
+}
 
 #[derive(Event)]
 pub struct WaveComplete;
