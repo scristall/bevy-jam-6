@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 use crate::game::events::{TileMouseDown, TileMouseMove, TileMouseUp};
+use crate::game::mouse::MousePos;
 use crate::game::tile::{TILE_SIZE, Tile};
+
+const CHAIN_IN_INVENTORY_SIZE: f32 = 64.0;
 
 #[derive(Component, Debug)]
 pub struct Chain {
@@ -13,6 +16,12 @@ pub struct ChainInInventory {
     stock: u32,
     length: u32,
 }
+
+#[derive(Component, Debug)]
+pub struct ChainInInventoryStock;
+
+#[derive(Component, Debug)]
+pub struct ChainInInventoryLength;
 
 #[derive(Component, Debug)]
 pub struct SelectedChain;
@@ -47,15 +56,114 @@ fn spawn_chain_segment(
     });
 }
 
-fn setup(mut commands: Commands) {
-    // For now, just set a selected chain
-    commands.spawn((
-        SelectedChain,
-        ChainInInventory {
-            stock: 1,
-            length: 5,
-        },
-    ));
+fn spawn_chain_in_inventory(
+    commands: &mut Commands,
+    stock: u32,
+    length: u32,
+    asset_server: &ResMut<AssetServer>,
+    pos: Vec2,
+) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_font = TextFont {
+        font: font.clone(),
+        font_size: 50.0,
+        ..default()
+    };
+
+    commands
+        .spawn((
+            Sprite::from_image(asset_server.load("images/chain.png")),
+            ChainInInventory { stock, length },
+            Transform::from_xyz(pos.x, pos.y, 5.0),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                ChainInInventoryStock,
+                Text2d::new(format!("{}", stock)),
+                text_font.clone(),
+                Transform::from_xyz(30.0, 30.0, 5.5),
+                TextColor(Color::linear_rgb(0.0, 0.0, 1.0)),
+            ));
+
+            parent.spawn((
+                ChainInInventoryLength,
+                Text2d::new(format!("{}", length)),
+                text_font,
+                Transform::from_xyz(-30.0, -30.0, 5.5),
+                TextColor(Color::linear_rgb(1.0, 0.0, 0.0)),
+            ));
+        });
+}
+
+fn mouse_down_on_chain_in_inventory(
+    mut commands: Commands,
+    mouse_pos: Res<MousePos>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+    mut q_unselected_chain: Query<
+        (Entity, &ChainInInventory, &mut Sprite, &GlobalTransform),
+        Without<SelectedChain>,
+    >,
+    mut q_selected_chain: Query<(
+        Entity,
+        &SelectedChain,
+        &mut Sprite,
+        &GlobalTransform,
+        &ChainInInventory,
+    )>,
+) {
+    let mut new_chain_selected = false;
+
+    for (entity, _, mut sprite, transform) in q_unselected_chain.iter_mut() {
+        let rect = Rect::new(
+            transform.translation().x,
+            transform.translation().y,
+            CHAIN_IN_INVENTORY_SIZE,
+            CHAIN_IN_INVENTORY_SIZE,
+        );
+        if mouse_pos.contains(rect) {
+            sprite.color = Color::linear_rgba(1.0, 0.0, 0.0, 1.0);
+        }
+        if mouse_button.just_pressed(MouseButton::Left) {
+            commands.entity(entity).insert(SelectedChain);
+            new_chain_selected = true;
+        }
+    }
+
+    for (entity, _, mut sprite, transform, chain_in_inventory) in q_selected_chain.iter_mut() {
+        let rect = Rect::new(
+            transform.translation().x,
+            transform.translation().y,
+            CHAIN_IN_INVENTORY_SIZE,
+            CHAIN_IN_INVENTORY_SIZE,
+        );
+        if !mouse_pos.contains(rect) {
+            commands.entity(entity).remove::<SelectedChain>();
+        }
+    }
+}
+
+fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
+    spawn_chain_in_inventory(
+        &mut commands,
+        1,
+        9,
+        &mut asset_server,
+        Vec2::new(-300.0, -400.0),
+    );
+    spawn_chain_in_inventory(
+        &mut commands,
+        1,
+        6,
+        &mut asset_server,
+        Vec2::new(0.0, -400.0),
+    );
+    spawn_chain_in_inventory(
+        &mut commands,
+        2,
+        3,
+        &mut asset_server,
+        Vec2::new(300.0, -400.0),
+    );
 }
 
 fn begin_chain(
