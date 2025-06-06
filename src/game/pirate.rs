@@ -4,6 +4,7 @@ use crate::game::chain::ChainSegment;
 use crate::game::components::*;
 use crate::game::game_state::GameState;
 use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE};
+use crate::game::goldbar::{Gold};
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
@@ -44,12 +45,12 @@ fn find_closest_point_idx(points: &Vec<Point>, location: Vec2) -> usize {
 }
 
 fn find_closest_gold_point(
-    gold_tiles: Query<(&Transform, &Position), With<Gold>>,
-    location: Vec2,
+    gold_tiles: Query<(&Gold, &Transform, &Position), Without<Pirate>>,
+    location: Vec2
 ) -> Point {
     let mut closest_distance: f32 = 100000000000.0;
     let mut closest_point: Point = Point { x: 0, y: 0 };
-    for (transform, position) in gold_tiles.iter() {
+    for (_, transform, position) in gold_tiles.iter() {
         let distance: f32 = (transform.translation.xy() - location).length();
         if distance < closest_distance {
             closest_distance = distance;
@@ -67,9 +68,9 @@ const END_POINT: Point = Point { x: 28, y: 5 };
 
 fn pirate_movement_system(
     time: Res<Time>,
-    mut pirates: Query<(&mut Transform, &MovementSpeed), With<Pirate>>,
+    mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed)>,
     chain_segs: Query<&ChainSegment>,
-    // gold_tiles: Query<(&Transform, &Position), With<Gold>>,
+    gold_tiles: Query<(&Gold, &Transform, &Position), Without<Pirate>>,
 ) {
     let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
     pathing_grid.allow_diagonal_move = false;
@@ -80,22 +81,25 @@ fn pirate_movement_system(
 
     pathing_grid.generate_components();
 
-    for (mut transform, speed) in pirates.iter_mut() {
-        let pirate_location = transform.translation.xy();
-        // let nearest_gold = find_closest_gold_point(gold_tiles, pirate_location);
 
-        let start: Point = START_POINT;
-        let end: Point = END_POINT;
-        // match pirate.state {
-        //     PirateState::PathingGold => {
-        //         start = START_POINT;
-        //         end = nearest_gold;
-        //     }
-        //     PirateState::PathingExit => {
-        //         start = nearest_gold;
-        //         end = START_POINT;
-        //     }
-        // }
+    for (mut pirate, mut transform, speed) in pirates.iter_mut() {
+
+        let pirate_location = transform.translation.xy();
+        let nearest_gold = find_closest_gold_point(gold_tiles, pirate_location);
+
+        let start: Point;
+        let end: Point;
+        match pirate.state {
+            PirateState::PathingGold => {
+                start = START_POINT;
+                end = nearest_gold;
+            }
+            PirateState::PathingExit => {
+                start = nearest_gold;
+                end = START_POINT;
+            }
+        }
+
 
         let path: Option<Vec<Point>> = pathing_grid.get_path_single_goal(start, end, false);
 

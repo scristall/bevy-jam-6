@@ -1,9 +1,7 @@
 mod components;
-mod systems;
 
 use bevy::prelude::*;
 use components::*;
-use systems::*;
 
 mod background;
 mod camera;
@@ -12,10 +10,11 @@ mod controls;
 mod events;
 mod game_state;
 mod goldbar;
+mod goldbar_text;
 mod mouse;
 mod pirate;
 mod tile;
-mod goldbar_text;
+mod prizes;
 mod ship;
 
 use crate::game::game_state::GameState;
@@ -36,28 +35,15 @@ impl Plugin for GamePlugin {
             .add_plugins(chain::plugin)
             .add_plugins(events::plugin)
             .add_plugins(pirate::plugin)
+            .add_plugins(prizes::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
             // Add startup systems
-            .add_systems(Startup, (setup_game, spawn_ship))
-            // Add gameplay systems
-            .add_systems(
-                Update,
-                (
-                    pathfinding_system,
-                    oxygen_drain_system,
-                    death_system,
-                    goal_reached_system,
-                    chain_placement_system,
-                    ui_update_system,
-                    wave_control_system,
-                    game_over_system,
-                    move_ship,
-                ),
-            );
+            .add_systems(Startup, setup_game);
+        app.add_systems(Startup, spawn_ship);
     }
 }
 

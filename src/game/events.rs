@@ -22,10 +22,14 @@ pub struct GoldBarCollected(pub TileEvent);
 #[derive(Event)]
 pub struct GoldBarDropped(pub TileEvent);
 
+#[derive(Event)]
+pub struct WaveComplete;
+
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();
     app.add_event::<TileMouseUp>();
     app.add_event::<TileMouseMove>();
     app.add_event::<GoldBarCollected>();
     app.add_event::<GoldBarDropped>();
+    app.add_event::<WaveComplete>();
 }
