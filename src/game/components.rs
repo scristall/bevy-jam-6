@@ -18,7 +18,10 @@ pub struct CurrentTarget(pub Vec2);
 
 // Tile components
 #[derive(Component)]
-pub struct Tile;
+pub struct Tile{
+    pub x: i32,
+    pub y: i32,
+}
 
 #[derive(Component)]
 pub struct Position(pub IVec2);
