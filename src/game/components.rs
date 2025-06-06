@@ -2,7 +2,6 @@
 
 use bevy::prelude::*;
 
-
 #[derive(Component)]
 pub struct Oxygen(pub f32);
 
@@ -14,10 +13,6 @@ pub struct Path(pub Vec<Vec2>);
 
 #[derive(Component)]
 pub struct CurrentTarget(pub Vec2);
-
-// Tile components
-#[derive(Component)]
-pub struct Tile;
 
 #[derive(Component)]
 pub struct Position(pub IVec2);

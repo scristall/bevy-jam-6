@@ -29,10 +29,14 @@ pub struct GoldBarDropped {
     pub entity: Entity,
 }
 
+#[derive(Event)]
+pub struct WaveComplete;
+
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();
     app.add_event::<TileMouseUp>();
     app.add_event::<TileMouseMove>();
     app.add_event::<GoldBarCollected>();
     app.add_event::<GoldBarDropped>();
+    app.add_event::<WaveComplete>();
 }
