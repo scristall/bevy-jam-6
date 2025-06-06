@@ -3,8 +3,11 @@ use bevy::prelude::*;
 use crate::game::chain::ChainSegment;
 use crate::game::components::*;
 use crate::game::game_state::GameState;
-use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE};
-use crate::game::goldbar::{Gold};
+use crate::game::goldbar::Gold;
+use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
+use crate::game::events::{TileEvent, GoldBarCollected, GoldBarDropped};
+
+
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
@@ -29,6 +32,13 @@ fn grid_coord_to_transform(p: &Point) -> Vec2 {
     )
 }
 
+fn vec_to_grid_coord(v: &Vec2) -> Point {
+    Point {
+        x: ((v.x - GRID_X_START) / TILE_SIZE) as i32,
+        y: ((v.y - GRID_Y_START) / TILE_SIZE) as i32,
+    }
+}
+
 fn find_closest_point_idx(points: &Vec<Point>, location: Vec2) -> usize {
     let mut closest_distance: f32 = 100000000000.0;
     let mut closest_idx: usize = 0;
@@ -44,33 +54,31 @@ fn find_closest_point_idx(points: &Vec<Point>, location: Vec2) -> usize {
     return closest_idx;
 }
 
-fn find_closest_gold_point(
-    gold_tiles: Query<(&Gold, &Transform, &Position), Without<Pirate>>,
-    location: Vec2
-) -> Point {
+fn find_closest_gold(
+    gold_tiles: Query<(Entity, &Transform, &Position), Without<Pirate>>,
+    location: Vec2,
+) -> Option<(Entity, Transform)> {
     let mut closest_distance: f32 = 100000000000.0;
-    let mut closest_point: Point = Point { x: 0, y: 0 };
-    for (_, transform, position) in gold_tiles.iter() {
+    let mut result: Option<(Entity, Transform)> = None;
+    for (i, (entity, transform, position)) in gold_tiles.iter().enumerate() {
         let distance: f32 = (transform.translation.xy() - location).length();
         if distance < closest_distance {
             closest_distance = distance;
-            closest_point = Point {
-                x: position.0.x,
-                y: position.0.y,
-            };
+            result = Some((entity, *transform));
         }
     }
-    return closest_point;
+    return result;
 }
 
-const START_POINT: Point = Point { x: 0, y: 5 };
-const END_POINT: Point = Point { x: 28, y: 5 };
+const BOAT_POINT: Point = Point { x: 0, y: 5 };
+
 
 fn pirate_movement_system(
     time: Res<Time>,
     mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed)>,
     chain_segs: Query<&ChainSegment>,
-    gold_tiles: Query<(&Gold, &Transform, &Position), Without<Pirate>>,
+    gold_tiles: Query<(Entity, &Transform, &Position), Without<Pirate>>,
+    mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
     let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
     pathing_grid.allow_diagonal_move = false;
@@ -79,24 +87,52 @@ fn pirate_movement_system(
         pathing_grid.set(chain_seg.0.x as usize, chain_seg.0.y as usize, true);
     }
 
+    pathing_grid.set(25, 0, true);
+    pathing_grid.set(25, 1, true);
+    pathing_grid.set(25, 2, true);
+    pathing_grid.set(25, 3, true);
+    pathing_grid.set(25, 4, true);
+    pathing_grid.set(25, 6, true);
+    pathing_grid.set(25, 7, true);
+    pathing_grid.set(25, 8, true);
+    pathing_grid.set(25, 9, true);
+    pathing_grid.set(25, 10, true);
+
     pathing_grid.generate_components();
 
-
     for (mut pirate, mut transform, speed) in pirates.iter_mut() {
-
         let pirate_location = transform.translation.xy();
-        let nearest_gold = find_closest_gold_point(gold_tiles, pirate_location);
+        let pirate_point = vec_to_grid_coord(&pirate_location);
+
+        let nearest_gold_point = match find_closest_gold(gold_tiles, pirate_location) {
+            Some((entity, transform)) => {
+                let nearest_gold_location = transform.translation.xy();
+                let nearest_gold_point = vec_to_grid_coord(&nearest_gold_location);
+
+                if pirate_location.distance(nearest_gold_location) < 2.0 {
+                    pirate.state = PirateState::PathingExit;
+                    let tile = Tile { x: nearest_gold_point.x, y: nearest_gold_point.y };
+                    event_gold_picked_up.write(GoldBarCollected{
+                        tile: tile,
+                        entity: entity,
+                    });
+                }
+
+                nearest_gold_point
+            }
+            None => BOAT_POINT
+        };
 
         let start: Point;
         let end: Point;
         match pirate.state {
             PirateState::PathingGold => {
-                start = START_POINT;
-                end = nearest_gold;
+                start = pirate_point;
+                end = nearest_gold_point;
             }
             PirateState::PathingExit => {
-                start = nearest_gold;
-                end = START_POINT;
+                start = pirate_point;
+                end = BOAT_POINT;
             }
         }
 
@@ -122,7 +158,7 @@ fn pirate_movement_system(
                 transform.translation.y += direction_vec.y;
             }
             None => {
-                let target_vec: Vec2 = grid_coord_to_transform(&END_POINT);
+                let target_vec: Vec2 = grid_coord_to_transform(&end);
                 let mut direction_vec: Vec2 = target_vec - pirate_location;
                 let distance: f32 = speed.0 * time.delta().as_secs_f32();
                 direction_vec = direction_vec.normalize() * distance;
@@ -144,8 +180,6 @@ pub fn pirate_spawn_system(
     for (mut timer, transform) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
-            println!("spawned a pirate");
-
             let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
 
             commands.spawn((
