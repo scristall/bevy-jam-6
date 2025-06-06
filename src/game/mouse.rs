@@ -9,6 +9,12 @@ impl Default for MousePos {
     }
 }
 
+impl MousePos {
+    pub fn contains(&self, rect: Rect) -> bool {
+        rect.contains(self.0)
+    }
+}
+
 fn mouse_move(
     mut evr_cursor: EventReader<CursorMoved>,
     mut mouse_pos: ResMut<MousePos>,

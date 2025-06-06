@@ -8,7 +8,7 @@ pub const TILE_SIZE: f32 = 53.0;
 pub const GRID_X_START: f32 = -620.0;
 pub const GRID_Y_START: f32 = -200.0;
 
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Debug, PartialEq)]
 pub struct Tile {
     pub x: i32,
     pub y: i32,

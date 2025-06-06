@@ -11,6 +11,9 @@ mod tile;
 mod chain;
 mod events;
 mod mouse;
+mod goldbar;
+
+use crate::game::goldbar::{Gold, spawn_gold_bars};
 
 pub struct GamePlugin;
 
@@ -26,10 +29,10 @@ impl Plugin for GamePlugin {
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()
-            
+
             // Add startup systems
             .add_systems(Startup, setup_game)
-            
+
             // Add gameplay systems
             .add_systems(Update, (
                 pirate_spawn_system,
@@ -49,6 +52,7 @@ impl Plugin for GamePlugin {
 fn setup_game(
     mut commands: Commands,
     game_config: Res<GameConfig>,
+    asset_server: Res<AssetServer>,
 ) {
     // Spawn spawner
     commands.spawn((
@@ -58,6 +62,9 @@ fn setup_game(
     ));
 
     // TODO: Spawn initial grid of tiles
-    // TODO: Spawn gold
+
+    // Spawn gold bars
+    spawn_gold_bars(&mut commands, &asset_server);
+
     // TODO: Setup UI
-} 
+}
