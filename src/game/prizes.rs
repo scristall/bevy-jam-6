@@ -46,7 +46,7 @@ fn on_wave_complete(
 
     commands.entity(e_prize_window).with_children(|parent| {
         parent.spawn((
-            Text2d::new("Prizes"),
+            Text2d::new("New Chains"),
             TextFont {
                 font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                 font_size: 50.0,

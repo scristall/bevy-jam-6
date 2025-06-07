@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
-use crate::game::events::{GoldBarCollected, WaveComplete, WaveStarted};
+use crate::game::events::{GoldBarCollected, PirateDeath, WaveComplete, WaveStarted};
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
 use crate::game::oxygen::Oxygen;
@@ -219,6 +219,7 @@ fn pirate_touching_chain_system(
     mut commands: Commands,
     mut q_pirates: Query<(&mut Oxygen, &Transform, Entity)>,
     q_chain: Query<(&ChainSegment, &Transform)>,
+    mut evw_pirate_death: EventWriter<PirateDeath>,
 ) {
     for (mut oxygen, transform, entity) in q_pirates.iter_mut() {
         for chain_seg in q_chain.iter() {
@@ -233,6 +234,7 @@ fn pirate_touching_chain_system(
                 oxygen.0 -= 10.0 * time.delta().as_secs_f32();
                 if oxygen.0 <= 0.0 {
                     commands.entity(entity).despawn();
+                    evw_pirate_death.write(PirateDeath {});
                     break;
                 }
             }
