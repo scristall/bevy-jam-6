@@ -9,8 +9,6 @@ const MODIFIER_WINDOW_HEIGHT: f32 = 800.0;
 
 const MODIFIER_CHOICE_BUTTON_SIZE: Vec2 = Vec2::new(200.0, 100.0);
 
-const MODIFIER_CHOICE_BUTTON_SPACING: f32 = 100.0;
-
 #[derive(Component)]
 pub struct ModifierScreen;
 
@@ -74,6 +72,20 @@ fn on_wave_complete(
         parent
             .spawn((
                 ModifierChoiceButton,
+                Transform::from_xyz(-300.0, 0.0, 5.0),
+                Mesh2d(meshes.add(rect)),
+                MeshMaterial2d(materials.add(color)),
+            ))
+            .with_child((
+                ModifierChoiceButtonText,
+                Text2d::new("Fool's Gold"),
+                text_font.clone(),
+                TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
+            ));
+
+        parent
+            .spawn((
+                ModifierChoiceButton,
                 Transform::from_xyz(0.0, 0.0, 5.0),
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
@@ -81,6 +93,20 @@ fn on_wave_complete(
             .with_child((
                 ModifierChoiceButtonText,
                 Text2d::new("Glue Puddle"),
+                text_font.clone(),
+                TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
+            ));
+
+        parent
+            .spawn((
+                ModifierChoiceButton,
+                Transform::from_xyz(300.0, 0.0, 5.0),
+                Mesh2d(meshes.add(rect)),
+                MeshMaterial2d(materials.add(color)),
+            ))
+            .with_child((
+                ModifierChoiceButtonText,
+                Text2d::new("Crates"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));

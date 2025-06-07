@@ -5,7 +5,7 @@ use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 
 const TUTORIAL_WINDOW_WIDTH: f32 = 1400.0;
-const TUTORIAL_WINDOW_HEIGHT: f32 = 800.0;
+const TUTORIAL_WINDOW_HEIGHT: f32 = 940.0;
 
 const TUTORIAL_WINDOW_PADDING: f32 = 20.0;
 
@@ -13,16 +13,20 @@ const TUTORIAL_TEXT_BOX_WIDTH: f32 = TUTORIAL_WINDOW_WIDTH - 2.0 * TUTORIAL_WIND
 const TUTORIAL_TEXT_BOX_HEIGHT: f32 = TUTORIAL_WINDOW_HEIGHT - 2.0 * TUTORIAL_WINDOW_PADDING;
 
 const OK_BUTTON_SIZE: Vec2 = Vec2::new(150.0, 100.0);
-const OK_BUTTON_POS: Vec2 = Vec2::new(0.0, -300.0);
+const OK_BUTTON_POS: Vec2 = Vec2::new(0.0, -400.0);
 
 const TUTORIAL_TEXT: &str = "
 Welcome to Chain Lockers!
 
-In this game, you will be placing chains to asphyxiate the enemy through the chains' oxidations deplating the air of the ship's hold.
+Chain Lockers are holds within ships to hold massive chains. These chains go through an oxidation recation, which rapidly depletes the oxygen in a ship's hold.
+
+In this game, you will place chains to asphyxiate pirates trying to steal your gold.
 
 To build a chain, click on a chain button in the main inventory to select it, then drag inside the hold to construct a maze.
 
-At the end of each wave, you will be able to choose more chains to add to your inventory.
+The number in the top right of each chain type is your stock, and the bottom left is the length of that chain.
+
+At the end of each wave, you will be able to choose chains to add and modifiers to apply to the hold.
 ";
 
 #[derive(Component, Debug)]
@@ -65,10 +69,10 @@ fn setup(
             ..default()
         };
         parent.spawn((
-            Text2d::new("Tutorial"),
+            Text2d::new("Chain Lockers"),
             title_font,
             TextColor(Color::linear_rgb(0.0, 0.0, 0.0)),
-            Transform::from_xyz(0.0, 300.0, 0.5),
+            Transform::from_xyz(0.0, 400.0, 0.5),
         ));
         parent.spawn((
             Text2d::new(TUTORIAL_TEXT),

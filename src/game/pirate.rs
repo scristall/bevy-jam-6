@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
-use crate::game::events::{GoldBarCollected, PirateDeath, WaveComplete, WaveStarted};
+use crate::game::events::{
+    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted
+};
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
 use crate::game::oxygen::Oxygen;
@@ -16,6 +18,7 @@ pub const HOLD_POINT: Point = Point { x: 26, y: 5 };
 
 const SPAWN_INTERVAL: f32 = 2.0;
 
+#[derive(PartialEq)]
 pub enum PirateState {
     PathingGold,
     PathingExit,
@@ -41,7 +44,14 @@ pub struct WaveState {
     pub pirates_spawned: u32,
 }
 
-impl Pirate {}
+#[derive(Resource)]
+pub struct WaveNumber(pub u32);
+
+impl Default for WaveNumber {
+    fn default() -> Self {
+        Self(0)
+    }
+}
 
 fn grid_coord_to_transform(p: &Point) -> Vec2 {
     Vec2::new(
@@ -113,15 +123,16 @@ pub fn get_pathing_grid(chain_segs: Query<&ChainSegment>) -> PathingGrid {
 }
 
 fn pirate_movement_system(
+    mut commands: Commands,
     time: Res<Time>,
-    mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed)>,
+    mut pirates: Query<(Entity, &mut Pirate, &mut Transform, &MovementSpeed)>,
     chain_segs: Query<&ChainSegment>,
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
     let pathing_grid = get_pathing_grid(chain_segs);
 
-    for (mut pirate, mut transform, speed) in pirates.iter_mut() {
+    for (entity, mut pirate, mut transform, speed) in pirates.iter_mut() {
         let pirate_location = transform.translation.xy();
         let pirate_point = vec_to_grid_coord(&pirate_location);
 
@@ -141,7 +152,10 @@ fn pirate_movement_system(
 
                 nearest_gold_point
             }
-            None => BOAT_POINT,
+            None => {
+                pirate.state = PirateState::PathingExit;
+                BOAT_POINT
+            }
         };
 
         let start: Point;
@@ -179,6 +193,13 @@ fn pirate_movement_system(
         direction_vec = direction_vec.normalize() * distance;
         transform.translation.x += direction_vec.x;
         transform.translation.y += direction_vec.y;
+
+        let new_location = transform.translation.xy();
+        let new_point = vec_to_grid_coord(&new_location);
+
+        if pirate.state == PirateState::PathingExit && new_point == BOAT_POINT {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
@@ -186,12 +207,16 @@ pub fn pirate_spawn_system(
     mut commands: Commands,
     time: Res<Time>,
     mut spawners: Query<(Entity, &mut SpawnTimer, &mut WaveState), With<Spawner>>,
+    mut wave_number: ResMut<WaveNumber>,
     asset_server: Res<AssetServer>,
 ) {
     for (entity, mut timer, mut wave_state) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
             let y_coord: f32 = (2.6 - wave_state.pirates_spawned as f32) * 100.0;
+
+            let movement_speed = wave_number.0 as f32 * 50.0 + 200.0;
+            let oxygen_level = wave_number.0 as f32 * 10.0 + 100.0;
 
             commands.spawn((
                 Pirate {
@@ -202,13 +227,14 @@ pub fn pirate_spawn_system(
                     ..default()
                 },
                 Transform::from_xyz(GRID_X_START, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
-                MovementSpeed(200.0),
-                Oxygen(100.0),
+                MovementSpeed(movement_speed),
+                Oxygen(oxygen_level),
             ));
 
             wave_state.pirates_spawned += 1;
             if wave_state.pirates_spawned == wave_state.pirates_per_wave {
                 commands.entity(entity).despawn();
+                wave_number.0 += 1;
             }
         }
     }
@@ -217,17 +243,18 @@ pub fn pirate_spawn_system(
 fn pirate_touching_chain_system(
     time: Res<Time>,
     mut commands: Commands,
-    mut q_pirates: Query<(&mut Oxygen, &Transform, Entity)>,
+    mut q_pirates: Query<(&Pirate, &mut Oxygen, &Transform, Entity)>,
     q_chain: Query<(&ChainSegment, &Transform)>,
     mut evw_pirate_death: EventWriter<PirateDeath>,
+    mut evw_gold_dropped: EventWriter<GoldBarDropped>,
 ) {
-    for (mut oxygen, transform, entity) in q_pirates.iter_mut() {
+    for (pirate, mut oxygen, transform, entity) in q_pirates.iter_mut() {
         for chain_seg in q_chain.iter() {
             // if pirate is next to a chain, deplete oxygen
-            let chain_point = chain_seg.1.translation.xy();
-            let pirate_point = transform.translation.xy();
-            let dx = (chain_point.x - pirate_point.x).abs();
-            let dy = (chain_point.y - pirate_point.y).abs();
+            let chain_pos = chain_seg.1.translation.xy();
+            let pirate_pos = transform.translation.xy();
+            let dx = (chain_pos.x - pirate_pos.x).abs();
+            let dy = (chain_pos.y - pirate_pos.y).abs();
 
             // add a little buffer
             if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
@@ -235,6 +262,15 @@ fn pirate_touching_chain_system(
                 if oxygen.0 <= 0.0 {
                     commands.entity(entity).despawn();
                     evw_pirate_death.write(PirateDeath {});
+                    if pirate.state == PirateState::PathingExit {
+                        let pirate_point = vec_to_grid_coord(&pirate_pos);
+                        evw_gold_dropped.write(GoldBarDropped {
+                            tile: Tile {
+                                x: pirate_point.x,
+                                y: pirate_point.y,
+                            },
+                        });
+                    }
                     break;
                 }
             }
@@ -245,12 +281,19 @@ fn pirate_touching_chain_system(
 fn end_wave_system(
     q_pirates: Query<Entity, With<Pirate>>,
     q_spawner: Query<Entity, With<Spawner>>,
+    q_gold_tiles: Query<Entity, With<Gold>>,
     mut next_state: ResMut<NextState<GameState>>,
     mut evw_wave_complete: EventWriter<WaveComplete>,
+    mut evw_game_over: EventWriter<GameOver>,
 ) {
     if q_pirates.iter().count() == 0 && q_spawner.iter().count() == 0 {
-        next_state.set(GameState::Prize);
-        evw_wave_complete.write(WaveComplete);
+        if q_gold_tiles.iter().count() == 0 {
+            next_state.set(GameState::GameOver);
+            evw_game_over.write(GameOver);
+        } else {
+            next_state.set(GameState::Prize);
+            evw_wave_complete.write(WaveComplete);
+        }
     }
 }
 
@@ -269,6 +312,8 @@ fn spawn_setup(mut commands: Commands, mut evr_wave_started: EventReader<WaveSta
 }
 
 pub fn plugin(app: &mut App) {
+    app.init_resource::<WaveNumber>();
+
     app.add_systems(
         Update,
         (

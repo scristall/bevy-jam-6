@@ -13,6 +13,7 @@ mod goldbar_text;
 mod modifiers;
 mod modifier_screen;
 mod mouse;
+mod game_over_screen;
 mod music;
 mod sound_effects;
 mod oxygen;
@@ -46,6 +47,7 @@ impl Plugin for GamePlugin {
             .add_plugins(music::plugin)
             .add_plugins(sound_effects::plugin)
             .add_plugins(modifiers::plugin)
-            .add_plugins(modifier_screen::plugin);
+            .add_plugins(modifier_screen::plugin)
+            .add_plugins(game_over_screen::plugin);
     }
 }

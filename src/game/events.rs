@@ -40,6 +40,9 @@ pub struct PirateDeath;
 #[derive(Event)]
 pub struct PrizeCollected;
 
+#[derive(Event)]
+pub struct GameOver;
+
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();
     app.add_event::<TileMouseUp>();
@@ -50,4 +53,5 @@ pub fn plugin(app: &mut App) {
     app.add_event::<WaveComplete>();
     app.add_event::<PirateDeath>();
     app.add_event::<PrizeCollected>();
+    app.add_event::<GameOver>();
 }

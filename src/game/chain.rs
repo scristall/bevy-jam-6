@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::events::{TileMouseDown, TileMouseMove, TileMouseUp};
+use crate::game::events::{TileMouseDown, TileMouseMove};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
