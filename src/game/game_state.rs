@@ -7,6 +7,7 @@ pub enum GameState {
     Building,
     WaveInProgress,
     Prize,
+    Modifier,
 
     #[allow(unused)]
     GameOver,

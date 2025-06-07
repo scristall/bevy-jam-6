@@ -10,6 +10,8 @@ mod events;
 mod game_state;
 mod goldbar;
 mod goldbar_text;
+mod modifiers;
+mod modifier_screen;
 mod mouse;
 mod music;
 mod sound_effects;
@@ -42,6 +44,8 @@ impl Plugin for GamePlugin {
             .add_plugins(goldbar::plugin)
             .add_plugins(oxygen::plugin)
             .add_plugins(music::plugin)
-            .add_plugins(sound_effects::plugin);
+            .add_plugins(sound_effects::plugin)
+            .add_plugins(modifiers::plugin)
+            .add_plugins(modifier_screen::plugin);
     }
 }

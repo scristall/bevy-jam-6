@@ -307,43 +307,45 @@ fn drag_chain(
 
 fn end_chain(
     mut commands: Commands,
-    mut tile_mouse_up_events: EventReader<TileMouseUp>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
     q_dragging_chain: Query<(Entity, &DraggingChain)>,
     mut q_selected_chain: Query<(&mut ChainButton, &Children), With<SelectedChain>>,
     mut q_stock_text: Query<&mut Text2d, With<ChainButtonStock>>,
     q_chain_segments: Query<&ChainSegment>,
 ) {
-    for _ in tile_mouse_up_events.read() {
-        // remove any dragging chains (should only be one, but lets be safe)
-        for (entity, dragging_chain) in q_dragging_chain.iter() {
-            commands.entity(entity).despawn();
+    if !mouse_button.just_released(MouseButton::Left) {
+        return;
+    }
 
-            // if we didn't finish the chain, remove it
-            if dragging_chain.remaining_length > 0 {
-                commands.entity(dragging_chain.e_chain).despawn();
-                continue;
-            }
+    // remove any dragging chains (should only be one, but lets be safe)
+    for (entity, dragging_chain) in q_dragging_chain.iter() {
+        commands.entity(entity).despawn();
 
-            // do a naive pathfind to make sure we didn't block the ship hold
-            let pathing_grid = get_pathing_grid(q_chain_segments);
+        // if we didn't finish the chain, remove it
+        if dragging_chain.remaining_length > 0 {
+            commands.entity(dragging_chain.e_chain).despawn();
+            continue;
+        }
 
-            let start = BOAT_POINT;
-            let end = HOLD_POINT;
+        // do a naive pathfind to make sure we didn't block the ship hold
+        let pathing_grid = get_pathing_grid(q_chain_segments);
 
-            let path = pathing_grid.get_path_single_goal(start, end, false);
+        let start = BOAT_POINT;
+        let end = HOLD_POINT;
 
-            if path.is_none() {
-                commands.entity(dragging_chain.e_chain).despawn();
-                continue;
-            }
+        let path = pathing_grid.get_path_single_goal(start, end, false);
 
-            // We placed a chain, update the stock
-            let (mut chain_in_inventory, children) = q_selected_chain.single_mut().unwrap();
-            chain_in_inventory.stock -= 1;
-            for child in children.iter() {
-                if let Ok(mut text) = q_stock_text.get_mut(child) {
-                    text.0 = format!("{}", chain_in_inventory.stock);
-                }
+        if path.is_none() {
+            commands.entity(dragging_chain.e_chain).despawn();
+            continue;
+        }
+
+        // We placed a chain, update the stock
+        let (mut chain_in_inventory, children) = q_selected_chain.single_mut().unwrap();
+        chain_in_inventory.stock -= 1;
+        for child in children.iter() {
+            if let Ok(mut text) = q_stock_text.get_mut(child) {
+                text.0 = format!("{}", chain_in_inventory.stock);
             }
         }
     }

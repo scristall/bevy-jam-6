@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::chain::{
     CHAIN_BUTTON_SIZE, ChainButton, ChainButtonStock, MainInventoryChainButton, spawn_chain_button,
 };
-use crate::game::events::WaveComplete;
+use crate::game::events::{PrizeCollected, WaveComplete};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 
@@ -107,6 +107,7 @@ fn mouse_down_on_chain_button_in_prize_window(
     >,
     mut q_chain_button_stock_text: Query<&mut Text2d, With<ChainButtonStock>>,
     q_prize_window: Query<(Entity, &PrizeWindow)>,
+    mut evw_prize_collected: EventWriter<PrizeCollected>,
 ) {
     for (selected_chain_button, mut sprite, transform) in q_chain_buttons.iter_mut() {
         if mouse_pos.is_in(
@@ -116,7 +117,8 @@ fn mouse_down_on_chain_button_in_prize_window(
             if mouse_button.just_pressed(MouseButton::Left) {
                 let (e_prize_window, _) = q_prize_window.single().unwrap();
                 commands.entity(e_prize_window).despawn();
-                state.set(GameState::Building);
+                state.set(GameState::Modifier);
+                evw_prize_collected.write(PrizeCollected {});
                 for (mut chain_button_in_inventory, children) in
                     q_chain_button_in_inventory.iter_mut()
                 {
