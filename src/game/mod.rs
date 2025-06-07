@@ -7,22 +7,22 @@ mod camera;
 mod chain;
 mod controls;
 mod events;
+mod game_over_screen;
 mod game_state;
 mod goldbar;
 mod goldbar_text;
-mod modifiers;
 mod modifier_screen;
+mod modifiers;
 mod mouse;
-mod game_over_screen;
 mod music;
-mod sound_effects;
 mod oxygen;
 mod pirate;
 mod prizes;
+mod random;
 mod ship;
+mod sound_effects;
 mod tile;
 mod tutorial;
-mod random;
 
 use crate::game::game_state::GameState;
 

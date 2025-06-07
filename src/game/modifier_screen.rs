@@ -94,7 +94,6 @@ fn on_wave_complete(
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
 
-
         // Not yet implemented
         //parent
         //    .spawn((

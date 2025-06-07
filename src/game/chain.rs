@@ -362,11 +362,13 @@ fn handle_crate_spawned(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for event in crate_spawned_events.read() {
-        let e_crate = commands.spawn((
-            Crate,
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            Visibility::Visible,
-        )).id();
+        let e_crate = commands
+            .spawn((
+                Crate,
+                Transform::from_xyz(0.0, 0.0, 0.0),
+                Visibility::Visible,
+            ))
+            .id();
 
         spawn_chain_segment(
             e_crate,

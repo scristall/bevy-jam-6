@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
 use crate::game::events::{
-    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted
+    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted,
 };
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
