@@ -15,6 +15,8 @@ mod mouse;
 mod pirate;
 mod tile;
 mod prizes;
+mod tutorial;
+mod music;
 mod ship;
 
 use crate::game::game_state::GameState;
@@ -36,9 +38,11 @@ impl Plugin for GamePlugin {
             .add_plugins(events::plugin)
             .add_plugins(pirate::plugin)
             .add_plugins(prizes::plugin)
+            .add_plugins(tutorial::plugin)
             .add_plugins(ship::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
+            .add_plugins(music::plugin)
             // Add resources
             .init_resource::<GameConfig>()
             .init_resource::<WaveState>()

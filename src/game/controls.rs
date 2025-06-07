@@ -59,5 +59,8 @@ fn next_wave_button(
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup);
-    app.add_systems(Update, next_wave_button);
+    app.add_systems(
+        Update,
+        (next_wave_button).run_if(in_state(GameState::Building)),
+    );
 }
