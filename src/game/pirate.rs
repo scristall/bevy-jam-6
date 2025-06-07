@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
-use crate::game::events::{GoldBarCollected, PirateDeath, WaveComplete, WaveStarted};
+use crate::game::events::{GoldBarCollected, WaveComplete, WaveStarted};
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
 use crate::game::oxygen::Oxygen;
@@ -132,10 +132,7 @@ fn pirate_movement_system(
                         x: nearest_gold_point.x,
                         y: nearest_gold_point.y,
                     };
-                    event_gold_picked_up.write(GoldBarCollected {
-                        tile,
-                        entity,
-                    });
+                    event_gold_picked_up.write(GoldBarCollected { tile, entity });
                 }
 
                 nearest_gold_point
@@ -218,7 +215,6 @@ fn pirate_touching_chain_system(
     mut commands: Commands,
     mut q_pirates: Query<(&mut Oxygen, &Transform, Entity)>,
     q_chain: Query<(&ChainSegment, &Transform)>,
-    mut event_pirate_death: EventWriter<PirateDeath>,
 ) {
     for (mut oxygen, transform, entity) in q_pirates.iter_mut() {
         for chain_seg in q_chain.iter() {
@@ -232,7 +228,6 @@ fn pirate_touching_chain_system(
             if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
                 oxygen.0 -= 10.0 * time.delta().as_secs_f32();
                 if oxygen.0 <= 0.0 {
-                    event_pirate_death.write(PirateDeath {});
                     commands.entity(entity).despawn();
                     break;
                 }
@@ -243,15 +238,13 @@ fn pirate_touching_chain_system(
 
 fn end_wave_system(
     q_pirates: Query<Entity, With<Pirate>>,
+    q_spawner: Query<Entity, With<Spawner>>,
     mut next_state: ResMut<NextState<GameState>>,
-    mut evr_pirate_death: EventReader<PirateDeath>,
     mut evw_wave_complete: EventWriter<WaveComplete>,
 ) {
-    for _ in evr_pirate_death.read() {
-        if q_pirates.iter().count() == 0 {
-            next_state.set(GameState::Prize);
-            evw_wave_complete.write(WaveComplete);
-        }
+    if q_pirates.iter().count() == 0 && q_spawner.iter().count() == 0 {
+        next_state.set(GameState::Prize);
+        evw_wave_complete.write(WaveComplete);
     }
 }
 
@@ -277,8 +270,14 @@ pub fn plugin(app: &mut App) {
             pirate_spawn_system,
             pirate_movement_system,
             pirate_touching_chain_system,
-            end_wave_system,
         )
             .run_if(in_state(GameState::WaveInProgress)),
+    );
+
+    // We have to run this here to ensure that the spawner is created prior to
+    // checking if the wave is complete
+    app.add_systems(
+        PostUpdate,
+        (end_wave_system).run_if(in_state(GameState::WaveInProgress)),
     );
 }
