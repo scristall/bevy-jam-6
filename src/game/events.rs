@@ -43,6 +43,16 @@ pub struct PrizeCollected;
 #[derive(Event)]
 pub struct GameOver;
 
+#[derive(Event)]
+pub struct FoolsGoldSpawned {
+    pub tile: Tile,
+}
+
+#[derive(Event)]
+pub struct CrateSpawned {
+    pub tile: Tile,
+}
+
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();
     app.add_event::<TileMouseUp>();
@@ -54,4 +64,6 @@ pub fn plugin(app: &mut App) {
     app.add_event::<PirateDeath>();
     app.add_event::<PrizeCollected>();
     app.add_event::<GameOver>();
+    app.add_event::<FoolsGoldSpawned>();
+    app.add_event::<CrateSpawned>();
 }

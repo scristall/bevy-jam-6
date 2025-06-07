@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::components::{Position, TileType};
-use crate::game::events::{GoldBarCollected, GoldBarDropped};
+use crate::game::events::{FoolsGoldSpawned, GoldBarCollected, GoldBarDropped};
 use crate::game::goldbar_text::GoldAmount;
 use crate::game::tile::Tile;
 
@@ -88,8 +88,22 @@ fn handle_gold_dropped(
     }
 }
 
+fn handle_fools_gold_spawned(
+    mut commands: Commands,
+    mut gold_amount: ResMut<GoldAmount>,
+    mut fools_gold_spawned_events: EventReader<FoolsGoldSpawned>,
+    asset_server: Res<AssetServer>,
+) {
+    for event in fools_gold_spawned_events.read() {
+        // Spawn a new gold bar at the tile position
+        let pos = IVec2::new(event.tile.x, event.tile.y);
+        spawn_gold_bar(&mut commands, &asset_server, pos, &mut gold_amount);
+    }
+}
+
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_gold_bars);
     app.add_systems(Update, handle_gold_collected);
     app.add_systems(Update, handle_gold_dropped);
+    app.add_systems(Update, handle_fools_gold_spawned);
 }

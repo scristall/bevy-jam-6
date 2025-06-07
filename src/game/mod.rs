@@ -22,6 +22,7 @@ mod prizes;
 mod ship;
 mod tile;
 mod tutorial;
+mod random;
 
 use crate::game::game_state::GameState;
 
@@ -30,6 +31,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
+            .add_plugins(random::plugin)
             .add_plugins(controls::plugin)
             .add_plugins(camera::plugin)
             .add_plugins(mouse::plugin)

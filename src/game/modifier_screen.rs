@@ -1,13 +1,19 @@
 use bevy::prelude::*;
+use grid_util::grid::Grid;
+use rand_chacha::rand_core::TryRngCore;
 
-use crate::game::events::PrizeCollected;
+use crate::game::chain::ChainSegment;
+use crate::game::events::{CrateSpawned, FoolsGoldSpawned, PrizeCollected};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
+use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
+use crate::game::random::RandomSource;
+use crate::game::tile::{GRID_HEIGHT, GRID_WIDTH, Tile};
 
 const MODIFIER_WINDOW_WIDTH: f32 = 1400.0;
 const MODIFIER_WINDOW_HEIGHT: f32 = 800.0;
 
-const MODIFIER_CHOICE_BUTTON_SIZE: Vec2 = Vec2::new(200.0, 100.0);
+const MODIFIER_CHOICE_BUTTON_SIZE: Vec2 = Vec2::new(260.0, 100.0);
 
 #[derive(Component)]
 pub struct ModifierScreen;
@@ -16,7 +22,11 @@ pub struct ModifierScreen;
 pub struct ModifierWindow;
 
 #[derive(Component, Debug)]
-pub struct ModifierChoiceButton;
+pub enum ModifierChoiceButton {
+    Glue,
+    FoolsGold,
+    Crates,
+}
 
 #[derive(Component, Debug)]
 pub struct ModifierChoiceButtonText;
@@ -71,42 +81,42 @@ fn on_wave_complete(
 
         parent
             .spawn((
-                ModifierChoiceButton,
+                ModifierChoiceButton::FoolsGold,
                 Transform::from_xyz(-300.0, 0.0, 5.0),
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
             ))
             .with_child((
                 ModifierChoiceButtonText,
-                Text2d::new("Fool's Gold"),
+                Text2d::new("1x Fool's Gold"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
 
         parent
             .spawn((
-                ModifierChoiceButton,
+                ModifierChoiceButton::Glue,
                 Transform::from_xyz(0.0, 0.0, 5.0),
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
             ))
             .with_child((
                 ModifierChoiceButtonText,
-                Text2d::new("Glue Puddle"),
+                Text2d::new("2x Glue Puddles"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
 
         parent
             .spawn((
-                ModifierChoiceButton,
+                ModifierChoiceButton::Crates,
                 Transform::from_xyz(300.0, 0.0, 5.0),
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
             ))
             .with_child((
                 ModifierChoiceButtonText,
-                Text2d::new("Crates"),
+                Text2d::new("4x Crates"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
@@ -118,10 +128,14 @@ fn mouse_down_on_modifier_choice_button(
     mouse_pos: Res<MousePos>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<NextState<GameState>>,
-    mut q_modifier_choice_buttons: Query<&GlobalTransform, With<ModifierChoiceButton>>,
+    mut random_source: ResMut<RandomSource>,
+    mut q_modifier_choice_buttons: Query<(&GlobalTransform, &ModifierChoiceButton)>,
     q_modifier_window: Query<(Entity, &ModifierWindow)>,
+    q_chain_segments: Query<&ChainSegment>,
+    mut evw_fools_gold_spawned: EventWriter<FoolsGoldSpawned>,
+    mut evw_crate_spawned: EventWriter<CrateSpawned>,
 ) {
-    for transform in q_modifier_choice_buttons.iter_mut() {
+    for (transform, modifier_choice_button) in q_modifier_choice_buttons.iter_mut() {
         if mouse_pos.is_in(
             transform.translation().truncate(),
             MODIFIER_CHOICE_BUTTON_SIZE,
@@ -130,6 +144,56 @@ fn mouse_down_on_modifier_choice_button(
             state.set(GameState::Building);
             let (e_modifier_window, _) = q_modifier_window.single().unwrap();
             commands.entity(e_modifier_window).despawn();
+
+            // get a list of tiles occupied by the chain
+            let chain_tiles = q_chain_segments.iter().map(|seg| seg.0).collect::<Vec<_>>();
+
+            // create list of tiles that are not occupied by the chain
+            let mut free_tiles = Vec::new();
+            for x in 1..GRID_WIDTH {
+                for y in 0..GRID_HEIGHT {
+                    let tile = Tile { x, y };
+                    if !chain_tiles.contains(&tile) {
+                        free_tiles.push(tile);
+                    }
+                }
+            }
+
+            let rng = &mut random_source.0;
+
+            match modifier_choice_button {
+                ModifierChoiceButton::FoolsGold => {
+                    // choose a random free tile
+                    let random_index = (rng.try_next_u32().unwrap() as usize) % free_tiles.len();
+                    let random_tile = free_tiles[random_index];
+                    evw_fools_gold_spawned.write(FoolsGoldSpawned { tile: random_tile });
+                }
+                ModifierChoiceButton::Glue => {
+                    println!("Glue");
+                }
+                ModifierChoiceButton::Crates => {
+                    let mut non_blocking_free_tiles = Vec::new();
+                    for tile in free_tiles.iter() {
+                        let mut pathing_grid = get_pathing_grid(q_chain_segments);
+                        pathing_grid.set(tile.x as usize, tile.y as usize, true);
+
+                        let start = BOAT_POINT;
+                        let end = HOLD_POINT;
+
+                        let path = pathing_grid.get_path_single_goal(start, end, false);
+                        if path.is_some() {
+                            non_blocking_free_tiles.push(tile);
+                        }
+                    }
+
+                    for _ in 0..4 {
+                        let random_index =
+                            (rng.try_next_u32().unwrap() as usize) % non_blocking_free_tiles.len();
+                        let random_tile = non_blocking_free_tiles[random_index];
+                        evw_crate_spawned.write(CrateSpawned { tile: *random_tile });
+                    }
+                }
+            }
         }
     }
 }

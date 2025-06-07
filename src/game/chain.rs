@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::events::{TileMouseDown, TileMouseMove};
+use crate::game::events::{CrateSpawned, TileMouseDown, TileMouseMove};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
@@ -43,6 +43,9 @@ pub struct DraggingChain {
 
 #[derive(Component, Debug)]
 pub struct ChainSegment(pub Tile);
+
+#[derive(Component)]
+pub struct Crate;
 
 fn spawn_chain_segment(
     e_chain: Entity,
@@ -351,6 +354,29 @@ fn end_chain(
     }
 }
 
+// for now, we just spawn crates as chain segments
+fn handle_crate_spawned(
+    mut commands: Commands,
+    mut crate_spawned_events: EventReader<CrateSpawned>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for event in crate_spawned_events.read() {
+        let e_crate = commands.spawn((
+            Crate,
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Visible,
+        )).id();
+
+        spawn_chain_segment(
+            e_crate,
+            &mut commands,
+            event.tile,
+            &mut meshes,
+            &mut materials,
+        );
+    }
+}
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup);
     app.add_systems(
@@ -363,4 +389,5 @@ pub fn plugin(app: &mut App) {
         )
             .run_if(in_state(GameState::Building)),
     );
+    app.add_systems(Update, handle_crate_spawned);
 }
