@@ -17,10 +17,12 @@ mod tile;
 mod prizes;
 mod tutorial;
 mod music;
+mod ship;
 
 use crate::game::game_state::GameState;
-use crate::game::goldbar::{Gold, plugin as goldbar_plugin, spawn_gold_bars};
-use crate::game::goldbar_text::{GoldAmount, GoldBarTextPlugin};
+use crate::game::goldbar::{Gold, spawn_gold_bars, plugin as goldbar_plugin};
+use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
+use crate::game::ship::{spawn_ship, move_ship};
 
 pub struct GamePlugin;
 
@@ -37,6 +39,7 @@ impl Plugin for GamePlugin {
             .add_plugins(pirate::plugin)
             .add_plugins(prizes::plugin)
             .add_plugins(tutorial::plugin)
+            .add_plugins(ship::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar_plugin)
             .add_plugins(music::plugin)
@@ -45,6 +48,7 @@ impl Plugin for GamePlugin {
             .init_resource::<WaveState>()
             // Add startup systems
             .add_systems(Startup, setup_game);
+        app.add_systems(Startup, spawn_ship);
     }
 }
 
