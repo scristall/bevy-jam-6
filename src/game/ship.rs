@@ -1,7 +1,7 @@
 use crate::game::events::{WaveComplete, WaveStarted};
 use bevy::prelude::*;
 
-pub const SHIP_SPEED: f32 = 100.0;
+pub const SHIP_SPEED: f32 = 180.0;
 pub const SHIP_MID_Y: f32 = 0.0;
 pub const SHIP_START_Y: f32 = 850.0;
 pub const SHIP_OUT_Y: f32 = -850.0;

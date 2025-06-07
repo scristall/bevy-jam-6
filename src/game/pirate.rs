@@ -105,7 +105,7 @@ pub fn get_pathing_grid(chain_segs: Query<&ChainSegment>) -> PathingGrid {
     }
 
     // but leave a gap for the pirates to exit
-    pathing_grid.set(HOLD_POINT.x as usize, HOLD_POINT.y as usize, false);
+    pathing_grid.set(GRID_WIDTH as usize, HOLD_POINT.y as usize, false);
 
     pathing_grid.generate_components();
 
@@ -191,7 +191,7 @@ pub fn pirate_spawn_system(
     for (entity, mut timer, mut wave_state) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
-            let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
+            let y_coord: f32 = (2.6 - wave_state.pirates_spawned as f32) * 100.0;
 
             commands.spawn((
                 Pirate {

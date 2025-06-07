@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::events::{TileMouseDown, TileMouseMove, TileMouseUp};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
-use crate::game::pirate::{get_pathing_grid, BOAT_POINT, HOLD_POINT};
+use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
 use crate::game::tile::{TILE_SIZE, Tile};
 
 pub const CHAIN_BUTTON_SIZE: f32 = 64.0;
