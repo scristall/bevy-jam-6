@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 use crate::game::{
-    chain::DraggingChain, events::{WaveComplete, WaveStarted}, game_state::GameState, mouse::MousePos
+    chain::DraggingChain,
+    events::{WaveComplete, WaveStarted},
+    game_state::GameState,
+    mouse::MousePos,
 };
 
 pub const NEXT_WAVE_BUTTON_POS: Vec2 = Vec2::new(700.0, -400.0);

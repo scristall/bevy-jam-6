@@ -59,29 +59,29 @@ fn spawn_game_over_screen(
                 font_size: 35.0,
                 ..default()
             };
-            
+
             parent.spawn((
                 Text2d::new("Game Over"),
                 title_font,
                 TextColor(Color::linear_rgb(0.0, 0.0, 0.0)),
                 Transform::from_xyz(0.0, 300.0, 0.5),
             ));
-            
+
             parent.spawn((
                 Text2d::new(game_over_text),
                 body_text_font,
                 TextLayout::new(JustifyText::Center, LineBreak::WordBoundary),
                 TextColor(Color::linear_rgb(0.0, 0.0, 0.0)),
                 Transform::from_xyz(0.0, -300.0, 0.5),
-                TextBounds::from(Vec2::new(GAME_OVER_TEXT_BOX_WIDTH, GAME_OVER_TEXT_BOX_HEIGHT)),
+                TextBounds::from(Vec2::new(
+                    GAME_OVER_TEXT_BOX_WIDTH,
+                    GAME_OVER_TEXT_BOX_HEIGHT,
+                )),
             ));
         });
     }
 }
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        spawn_game_over_screen
-    );
+    app.add_systems(Update, spawn_game_over_screen);
 }

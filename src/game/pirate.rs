@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
 use crate::game::events::{
-    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted
+    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted,
 };
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
@@ -36,6 +36,7 @@ pub struct SpawnTimer(pub Timer);
 #[derive(Component)]
 pub struct Pirate {
     state: PirateState,
+    carrying_gold: bool,
 }
 
 #[derive(Component)]
@@ -142,6 +143,7 @@ fn pirate_movement_system(
                         y: nearest_gold_point.y,
                     };
                     event_gold_picked_up.write(GoldBarCollected { tile, entity });
+                    pirate.carrying_gold = true;
                 }
 
                 nearest_gold_point
@@ -215,6 +217,7 @@ pub fn pirate_spawn_system(
             commands.spawn((
                 Pirate {
                     state: PirateState::PathingGold,
+                    carrying_gold: false,
                 },
                 Sprite {
                     image: asset_server.load("images/pirate.png"),
@@ -252,11 +255,12 @@ fn pirate_touching_chain_system(
 
             // add a little buffer
             if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
+                let pirate_was_alive = oxygen.0 > 0.0;
                 oxygen.0 -= 10.0 * time.delta().as_secs_f32();
-                if oxygen.0 <= 0.0 {
+                if pirate_was_alive && oxygen.0 <= 0.0 {
                     commands.entity(entity).despawn();
                     evw_pirate_death.write(PirateDeath {});
-                    if pirate.state == PirateState::PathingExit {
+                    if pirate.carrying_gold {
                         let pirate_point = vec_to_grid_coord(&pirate_pos);
                         evw_gold_dropped.write(GoldBarDropped {
                             tile: Tile {

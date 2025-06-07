@@ -70,6 +70,10 @@ fn handle_gold_collected(
             if *tile == event.tile {
                 // despawn the gold bar
                 despawn_gold_bar(&mut commands, event.entity, &mut gold_amount);
+
+                // there could be multiple gold bars on the same tile
+                // so we need to break out of the loop
+                break;
             }
         }
     }
