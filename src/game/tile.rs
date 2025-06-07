@@ -67,7 +67,7 @@ fn setup(
                 BackgroundTile { is_hovered: false },
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
-                tile.grid_coord_to_transform(1.0),
+                tile.grid_coord_to_transform(-1.0),
             ));
         }
     }
@@ -81,6 +81,7 @@ fn mouse_events(
             &mut BackgroundTile,
             &MeshMaterial2d<ColorMaterial>,
             &GlobalTransform,
+            &mut Transform,
         ),
         With<BackgroundTile>,
     >,
@@ -91,13 +92,13 @@ fn mouse_events(
     mut evr_tile_mouse_up: EventWriter<TileMouseUp>,
     mut evr_tile_mouse_move: EventWriter<TileMouseMove>,
 ) {
-    for (_, tile, mut background_tile, material, transform) in q_tile.iter_mut() {
+    for (_, tile, mut background_tile, material, g_transform, mut transform) in q_tile.iter_mut() {
         let Some(material) = materials.get_mut(material) else {
             continue;
         };
 
-        if !tile.contains(mouse_pos.0, transform) {
-            material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
+        if !tile.contains(mouse_pos.0, g_transform) {
+            transform.translation.z = -1.0;
             background_tile.is_hovered = false;
             continue;
         }
@@ -114,7 +115,7 @@ fn mouse_events(
 
         background_tile.is_hovered = true;
 
-        material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
+        transform.translation.z = 1.0;
         evr_tile_mouse_move.write(TileMouseMove(TileEvent { tile: *tile }));
     }
 }
