@@ -23,6 +23,7 @@ pub struct ModifierWindow;
 
 #[derive(Component, Debug)]
 pub enum ModifierChoiceButton {
+    #[allow(unused)]
     Glue,
     FoolsGold,
     Crates,
@@ -93,19 +94,22 @@ fn on_wave_complete(
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
 
-        parent
-            .spawn((
-                ModifierChoiceButton::Glue,
-                Transform::from_xyz(0.0, 0.0, 5.0),
-                Mesh2d(meshes.add(rect)),
-                MeshMaterial2d(materials.add(color)),
-            ))
-            .with_child((
-                ModifierChoiceButtonText,
-                Text2d::new("2x Glue Puddles"),
-                text_font.clone(),
-                TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
-            ));
+
+        // Not yet implemented
+        //parent
+        //    .spawn((
+        //        ModifierChoiceButton::Glue,
+        //        Transform::from_xyz(0.0, 0.0, 5.0),
+        //        Mesh2d(meshes.add(rect)),
+        //        MeshMaterial2d(materials.add(color)),
+        //        Visibility::Hidden,
+        //    ))
+        //    .with_child((
+        //        ModifierChoiceButtonText,
+        //        Text2d::new("2x Glue Puddle"),
+        //        text_font.clone(),
+        //        TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
+        //    ));
 
         parent
             .spawn((
@@ -116,7 +120,7 @@ fn on_wave_complete(
             ))
             .with_child((
                 ModifierChoiceButtonText,
-                Text2d::new("4x Crates"),
+                Text2d::new("4x Broken Chain"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
@@ -176,6 +180,7 @@ fn mouse_down_on_modifier_choice_button(
                     for tile in free_tiles.iter() {
                         let mut pathing_grid = get_pathing_grid(q_chain_segments);
                         pathing_grid.set(tile.x as usize, tile.y as usize, true);
+                        pathing_grid.generate_components();
 
                         let start = BOAT_POINT;
                         let end = HOLD_POINT;
