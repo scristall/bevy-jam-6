@@ -44,14 +44,8 @@ pub struct WaveState {
     pub pirates_spawned: u32,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct WaveNumber(pub u32);
-
-impl Default for WaveNumber {
-    fn default() -> Self {
-        Self(0)
-    }
-}
 
 fn grid_coord_to_transform(p: &Point) -> Vec2 {
     Vec2::new(

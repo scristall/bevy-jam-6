@@ -125,12 +125,11 @@ fn mouse_down_on_modifier_choice_button(
         if mouse_pos.is_in(
             transform.translation().truncate(),
             MODIFIER_CHOICE_BUTTON_SIZE,
-        ) {
-            if mouse_button.just_pressed(MouseButton::Left) {
-                state.set(GameState::Building);
-                let (e_modifier_window, _) = q_modifier_window.single().unwrap();
-                commands.entity(e_modifier_window).despawn();
-            }
+        ) && mouse_button.just_pressed(MouseButton::Left)
+        {
+            state.set(GameState::Building);
+            let (e_modifier_window, _) = q_modifier_window.single().unwrap();
+            commands.entity(e_modifier_window).despawn();
         }
     }
 }
