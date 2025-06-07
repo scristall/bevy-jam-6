@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::text::{FontSmoothing, LineBreak, TextBounds};
+use bevy::text::{LineBreak, TextBounds};
 
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
@@ -111,12 +111,12 @@ fn ok_button(
     mut state: ResMut<NextState<GameState>>,
     q_tutorial_window: Query<(Entity, &TutorialWindow)>,
 ) {
-    if mouse_button.just_pressed(MouseButton::Left) {
-        if mouse_pos.is_in(OK_BUTTON_POS, OK_BUTTON_SIZE) {
-            state.set(GameState::Building);
-            let (e_tutorial_window, _) = q_tutorial_window.single().unwrap();
-            commands.entity(e_tutorial_window).despawn();
-        }
+    if mouse_button.just_pressed(MouseButton::Left)
+        && mouse_pos.is_in(OK_BUTTON_POS, OK_BUTTON_SIZE)
+    {
+        state.set(GameState::Building);
+        let (e_tutorial_window, _) = q_tutorial_window.single().unwrap();
+        commands.entity(e_tutorial_window).despawn();
     }
 }
 

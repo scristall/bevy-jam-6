@@ -87,27 +87,21 @@ fn mouse_events(
     mut evr_tile_mouse_up: EventWriter<TileMouseUp>,
     mut evr_tile_mouse_move: EventWriter<TileMouseMove>,
 ) {
-    for (entity, tile, mut background_tile, material, transform) in q_tile.iter_mut() {
+    for (_, tile, mut background_tile, material, transform) in q_tile.iter_mut() {
         let Some(material) = materials.get_mut(material) else {
             continue;
         };
 
-        if !tile.contains(mouse_pos.0, &transform) {
+        if !tile.contains(mouse_pos.0, transform) {
             material.color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
             background_tile.is_hovered = false;
             continue;
         }
 
         if mouse_button.just_pressed(MouseButton::Left) {
-            evr_tile_mouse_down.write(TileMouseDown(TileEvent {
-                tile: tile.clone(),
-                entity,
-            }));
+            evr_tile_mouse_down.write(TileMouseDown(TileEvent { tile: *tile }));
         } else if mouse_button.just_released(MouseButton::Left) {
-            evr_tile_mouse_up.write(TileMouseUp(TileEvent {
-                tile: tile.clone(),
-                entity,
-            }));
+            evr_tile_mouse_up.write(TileMouseUp(TileEvent { tile: *tile }));
         }
 
         if background_tile.is_hovered {
@@ -117,10 +111,7 @@ fn mouse_events(
         background_tile.is_hovered = true;
 
         material.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
-        evr_tile_mouse_move.write(TileMouseMove(TileEvent {
-            tile: tile.clone(),
-            entity,
-        }));
+        evr_tile_mouse_move.write(TileMouseMove(TileEvent { tile: *tile }));
     }
 }
 

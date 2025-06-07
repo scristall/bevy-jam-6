@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
-use crate::game::components::Position;
 use crate::game::events::{GoldBarCollected, PirateDeath, WaveComplete, WaveStarted};
 use crate::game::game_state::GameState;
+use crate::game::goldbar::Gold;
 use crate::game::oxygen::Oxygen;
 use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
 
@@ -20,12 +20,6 @@ pub enum PirateState {
 
 #[derive(Component)]
 pub struct MovementSpeed(pub f32);
-
-#[derive(Component)]
-pub struct Path(pub Vec<Vec2>);
-
-#[derive(Component)]
-pub struct CurrentTarget(pub Vec2);
 
 #[derive(Component)]
 pub struct Spawner;
@@ -60,7 +54,7 @@ fn vec_to_grid_coord(v: &Vec2) -> Point {
     }
 }
 
-fn find_closest_point_idx(points: &Vec<Point>, location: Vec2) -> usize {
+fn find_closest_point_idx(points: &[Point], location: Vec2) -> usize {
     let mut closest_distance: f32 = 100000000000.0;
     let mut closest_idx: usize = 0;
     for (i, point) in points.iter().enumerate() {
@@ -72,23 +66,26 @@ fn find_closest_point_idx(points: &Vec<Point>, location: Vec2) -> usize {
             closest_idx = i;
         }
     }
-    return closest_idx;
+
+    closest_idx
 }
 
 fn find_closest_gold(
-    gold_tiles: Query<(Entity, &Transform, &Position), Without<Pirate>>,
+    gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     location: Vec2,
 ) -> Option<(Entity, Transform)> {
     let mut closest_distance: f32 = 100000000000.0;
     let mut result: Option<(Entity, Transform)> = None;
-    for (i, (entity, transform, position)) in gold_tiles.iter().enumerate() {
+
+    for (entity, transform) in gold_tiles.iter() {
         let distance: f32 = (transform.translation.xy() - location).length();
         if distance < closest_distance {
             closest_distance = distance;
             result = Some((entity, *transform));
         }
     }
-    return result;
+
+    result
 }
 
 const BOAT_POINT: Point = Point { x: 0, y: 5 };
@@ -97,7 +94,7 @@ fn pirate_movement_system(
     time: Res<Time>,
     mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed)>,
     chain_segs: Query<&ChainSegment>,
-    gold_tiles: Query<(Entity, &Transform, &Position), Without<Pirate>>,
+    gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
     let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
@@ -136,8 +133,8 @@ fn pirate_movement_system(
                         y: nearest_gold_point.y,
                     };
                     event_gold_picked_up.write(GoldBarCollected {
-                        tile: tile,
-                        entity: entity,
+                        tile,
+                        entity,
                     });
                 }
 
@@ -145,7 +142,6 @@ fn pirate_movement_system(
             }
             None => BOAT_POINT,
         };
-
 
         let start: Point;
         let end: Point;
@@ -229,14 +225,14 @@ fn pirate_touching_chain_system(
             // if pirate is next to a chain, deplete oxygen
             let chain_point = chain_seg.1.translation.xy();
             let pirate_point = transform.translation.xy();
-            let dx = (chain_point.x - pirate_point.x).abs() as f32;
-            let dy = (chain_point.y - pirate_point.y).abs() as f32;
+            let dx = (chain_point.x - pirate_point.x).abs();
+            let dy = (chain_point.y - pirate_point.y).abs();
 
             // add a little buffer
             if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
                 oxygen.0 -= 10.0 * time.delta().as_secs_f32();
                 if oxygen.0 <= 0.0 {
-                    event_pirate_death.write(PirateDeath { entity });
+                    event_pirate_death.write(PirateDeath {});
                     commands.entity(entity).despawn();
                     break;
                 }

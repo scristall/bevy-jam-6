@@ -1,8 +1,9 @@
 use bevy::prelude::*;
-use crate::game::tile::{Tile, TILE_SIZE, GRID_X_START, GRID_Y_START};
+
 use crate::game::components::{Position, TileType};
-use crate::game::goldbar_text::GoldAmount;
 use crate::game::events::{GoldBarCollected, GoldBarDropped};
+use crate::game::goldbar_text::GoldAmount;
+use crate::game::tile::Tile;
 
 pub const TOTAL_GOLD_BARS: i32 = 4;
 pub const GOLD_ROOM_X: i32 = 27;
@@ -18,26 +19,25 @@ fn spawn_gold_bar(
     gold_amount: &mut ResMut<GoldAmount>,
 ) -> Entity {
     let tile = Tile { x: pos.x, y: pos.y };
-    let entity = commands.spawn((
-        Gold,
-        Position(pos),
-        TileType::Gold,
-        Sprite {
-            image: asset_server.load("images/gold_bar.png"),
-            ..default()
-        },
-        tile.grid_coord_to_transform(2.0),
-        tile,
-    )).id();
+    let entity = commands
+        .spawn((
+            Gold,
+            Position(pos),
+            TileType::Gold,
+            Sprite {
+                image: asset_server.load("images/gold_bar.png"),
+                ..default()
+            },
+            tile.grid_coord_to_transform(2.0),
+            tile,
+        ))
+        .id();
     gold_amount.value += 1;
-    return entity;
+
+    entity
 }
 
-fn despawn_gold_bar(
-    commands: &mut Commands,
-    entity: Entity,
-    gold_amount: &mut ResMut<GoldAmount>,
-) {
+fn despawn_gold_bar(commands: &mut Commands, entity: Entity, gold_amount: &mut ResMut<GoldAmount>) {
     gold_amount.value -= 1;
     commands.entity(entity).despawn();
 }
@@ -48,8 +48,8 @@ pub fn spawn_gold_bars(
     mut gold_amount: ResMut<GoldAmount>,
 ) {
     let mut gold_positions = Vec::with_capacity(TOTAL_GOLD_BARS as usize);
-    for x in GOLD_ROOM_X..=GOLD_ROOM_X+1 {
-        for y in GOLD_ROOM_Y..=GOLD_ROOM_Y+TOTAL_GOLD_BARS/2-1 {
+    for x in GOLD_ROOM_X..=GOLD_ROOM_X + 1 {
+        for y in GOLD_ROOM_Y..=GOLD_ROOM_Y + TOTAL_GOLD_BARS / 2 - 1 {
             gold_positions.push(IVec2::new(x, y));
         }
     }
@@ -88,10 +88,8 @@ fn handle_gold_dropped(
     }
 }
 
-
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_gold_bars);
     app.add_systems(Update, handle_gold_collected);
     app.add_systems(Update, handle_gold_dropped);
 }
-

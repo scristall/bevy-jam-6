@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::game::game_state::GameState;
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct Ship {
@@ -31,10 +31,7 @@ pub fn spawn_ship(
     ));
 }
 
-pub fn move_ship(
-    mut ship_query: Query<(&mut Transform, &Ship)>,
-    time: Res<Time>,
-) {
+pub fn move_ship(mut ship_query: Query<(&mut Transform, &Ship)>, time: Res<Time>) {
     for (mut transform, ship) in ship_query.iter_mut() {
         let current_y = transform.translation.y;
         let target_y = ship.target_y;
@@ -61,6 +58,3 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_ship);
     app.add_systems(Update, (move_ship, reset_ship_position));
 }
-
-
-

@@ -1,7 +1,6 @@
 mod components;
 
 use bevy::prelude::*;
-use components::*;
 
 mod background;
 mod camera;
@@ -12,16 +11,15 @@ mod game_state;
 mod goldbar;
 mod goldbar_text;
 mod mouse;
-mod pirate;
-mod oxygen;
-mod tile;
-mod prizes;
-mod tutorial;
 mod music;
+mod oxygen;
+mod pirate;
+mod prizes;
 mod ship;
+mod tile;
+mod tutorial;
 
 use crate::game::game_state::GameState;
-use crate::game::goldbar_text::{GoldBarTextPlugin, GoldAmount};
 
 pub struct GamePlugin;
 
@@ -39,7 +37,7 @@ impl Plugin for GamePlugin {
             .add_plugins(prizes::plugin)
             .add_plugins(tutorial::plugin)
             .add_plugins(ship::plugin)
-            .add_plugins(GoldBarTextPlugin)
+            .add_plugins(goldbar_text::plugin)
             .add_plugins(goldbar::plugin)
             .add_plugins(oxygen::plugin)
             .add_plugins(music::plugin);

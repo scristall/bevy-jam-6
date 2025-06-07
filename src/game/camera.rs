@@ -1,7 +1,6 @@
 use bevy::{prelude::*, render::camera::ScalingMode};
 
 pub const VERTICAL_RESOLUTION: f32 = 1080.0;
-pub const HORIZONTAL_RESOLUTION: f32 = 1920.0;
 
 #[derive(Component)]
 pub struct MainCamera;

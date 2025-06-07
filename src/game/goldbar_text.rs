@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-
 #[derive(Component)]
 struct GoldBarText;
 
@@ -35,13 +34,8 @@ fn update_gold_text(
     }
 }
 
-pub struct GoldBarTextPlugin;
-
-impl Plugin for GoldBarTextPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<GoldAmount>()
-            .add_systems(Startup, spawn_gold_bar_text)
-            .add_systems(Update, update_gold_text);
-    }
+pub fn plugin(app: &mut App) {
+    app.init_resource::<GoldAmount>()
+        .add_systems(Startup, spawn_gold_bar_text)
+        .add_systems(Update, update_gold_text);
 }
-

@@ -9,6 +9,7 @@ pub const CHAIN_BUTTON_SIZE: f32 = 64.0;
 
 #[derive(Component, Debug)]
 pub struct Chain {
+    #[allow(unused)]
     length: u32,
 }
 
@@ -156,7 +157,7 @@ fn mouse_down_on_chain_button_in_inventory(
     }
 }
 
-fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: ResMut<AssetServer>) {
     let e_main_inventory = commands
         .spawn((
             MainInventory,
@@ -169,7 +170,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
         e_main_inventory,
         1,
         9,
-        &mut asset_server,
+        &asset_server,
         Vec2::new(-300.0, -400.0),
     );
     spawn_chain_button::<MainInventoryChainButton>(
@@ -177,7 +178,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
         e_main_inventory,
         1,
         6,
-        &mut asset_server,
+        &asset_server,
         Vec2::new(0.0, -400.0),
     );
     spawn_chain_button::<MainInventoryChainButton>(
@@ -185,7 +186,7 @@ fn setup(mut commands: Commands, mut asset_server: ResMut<AssetServer>) {
         e_main_inventory,
         2,
         3,
-        &mut asset_server,
+        &asset_server,
         Vec2::new(300.0, -400.0),
     );
 }

@@ -1,11 +1,11 @@
+#![allow(unused)]
+
 use bevy::prelude::*;
 
-use crate::game::goldbar::Gold;
 use crate::game::tile::Tile;
 
 pub struct TileEvent {
     pub tile: Tile,
-    pub entity: Entity,
 }
 
 #[derive(Event)]
@@ -26,7 +26,6 @@ pub struct GoldBarCollected {
 #[derive(Event)]
 pub struct GoldBarDropped {
     pub tile: Tile,
-    pub entity: Entity,
 }
 
 #[derive(Event)]
@@ -36,9 +35,7 @@ pub struct WaveStarted;
 pub struct WaveComplete;
 
 #[derive(Event)]
-pub struct PirateDeath {
-    pub entity: Entity,
-}
+pub struct PirateDeath;
 
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();

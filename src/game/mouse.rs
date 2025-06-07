@@ -34,7 +34,7 @@ fn mouse_move(
         let cursor = event.position;
         let camera = q_camera.single().unwrap();
 
-        let world_cursor_pos = camera.0.viewport_to_world_2d(&camera.1, cursor).unwrap();
+        let world_cursor_pos = camera.0.viewport_to_world_2d(camera.1, cursor).unwrap();
         mouse_pos.0 = world_cursor_pos;
     }
 }
