@@ -8,6 +8,9 @@ pub const TILE_SIZE: f32 = 53.0;
 pub const GRID_X_START: f32 = -620.0;
 pub const GRID_Y_START: f32 = -200.0;
 
+pub const GRID_WIDTH: i32 = 25;
+pub const GRID_HEIGHT: i32 = 11;
+
 #[derive(Component, Copy, Clone, Debug, PartialEq)]
 pub struct Tile {
     pub x: i32,
@@ -49,12 +52,13 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let width = 25;
-    let height = 11;
+    let width = GRID_WIDTH;
+    let height = GRID_HEIGHT;
 
     let rect = Rectangle::new(TILE_SIZE, TILE_SIZE);
     let color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
 
+    // leave a gap for the pirates to enter
     for x in 1..width {
         for y in 0..height {
             let tile = Tile { x, y };

@@ -5,11 +5,14 @@ use crate::game::events::{GoldBarCollected, WaveComplete, WaveStarted};
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
 use crate::game::oxygen::Oxygen;
-use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
+use crate::game::tile::{GRID_HEIGHT, GRID_WIDTH, GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
 use grid_util::point::Point;
+
+pub const BOAT_POINT: Point = Point { x: 0, y: 5 };
+pub const HOLD_POINT: Point = Point { x: 26, y: 5 };
 
 const SPAWN_INTERVAL: f32 = 2.0;
 
@@ -88,7 +91,26 @@ fn find_closest_gold(
     result
 }
 
-const BOAT_POINT: Point = Point { x: 0, y: 5 };
+pub fn get_pathing_grid(chain_segs: Query<&ChainSegment>) -> PathingGrid {
+    let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
+    pathing_grid.allow_diagonal_move = false;
+
+    for chain_seg in chain_segs.iter() {
+        pathing_grid.set(chain_seg.0.x as usize, chain_seg.0.y as usize, true);
+    }
+
+    // set the back wall
+    for y in 0..GRID_HEIGHT {
+        pathing_grid.set(GRID_WIDTH as usize, y as usize, true);
+    }
+
+    // but leave a gap for the pirates to exit
+    pathing_grid.set(HOLD_POINT.x as usize, HOLD_POINT.y as usize, false);
+
+    pathing_grid.generate_components();
+
+    pathing_grid
+}
 
 fn pirate_movement_system(
     time: Res<Time>,
@@ -97,25 +119,7 @@ fn pirate_movement_system(
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
-    let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
-    pathing_grid.allow_diagonal_move = false;
-
-    for chain_seg in chain_segs.iter() {
-        pathing_grid.set(chain_seg.0.x as usize, chain_seg.0.y as usize, true);
-    }
-
-    pathing_grid.set(25, 0, true);
-    pathing_grid.set(25, 1, true);
-    pathing_grid.set(25, 2, true);
-    pathing_grid.set(25, 3, true);
-    pathing_grid.set(25, 4, true);
-    pathing_grid.set(25, 6, true);
-    pathing_grid.set(25, 7, true);
-    pathing_grid.set(25, 8, true);
-    pathing_grid.set(25, 9, true);
-    pathing_grid.set(25, 10, true);
-
-    pathing_grid.generate_components();
+    let pathing_grid = get_pathing_grid(chain_segs);
 
     for (mut pirate, mut transform, speed) in pirates.iter_mut() {
         let pirate_location = transform.translation.xy();

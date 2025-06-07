@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::{
-    events::{WaveComplete, WaveStarted},
-    game_state::GameState,
-    mouse::MousePos,
+    chain::DraggingChain, events::{WaveComplete, WaveStarted}, game_state::GameState, mouse::MousePos
 };
 
 pub const NEXT_WAVE_BUTTON_POS: Vec2 = Vec2::new(700.0, -400.0);
@@ -51,7 +49,13 @@ fn next_wave_button(
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut evw_wave_started: EventWriter<WaveStarted>,
+    q_dragging_chain: Query<&DraggingChain>,
 ) {
+    // if we're dragging a chain, don't allow the next wave button to be pressed
+    if q_dragging_chain.iter().count() > 0 {
+        return;
+    }
+
     if mouse_button.just_pressed(MouseButton::Left)
         && mouse_pos.is_in(NEXT_WAVE_BUTTON_POS, NEXT_WAVE_BUTTON_SIZE)
     {
