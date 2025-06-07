@@ -43,8 +43,8 @@ fn despawn_gold_bar(
 }
 
 pub fn spawn_gold_bars(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut gold_amount: ResMut<GoldAmount>,
 ) {
     let mut gold_positions = Vec::with_capacity(TOTAL_GOLD_BARS as usize);
@@ -55,7 +55,7 @@ pub fn spawn_gold_bars(
     }
 
     for pos in gold_positions {
-        spawn_gold_bar(commands, asset_server, pos, &mut gold_amount);
+        spawn_gold_bar(&mut commands, &asset_server, pos, &mut gold_amount);
     }
 }
 
@@ -90,6 +90,7 @@ fn handle_gold_dropped(
 
 
 pub fn plugin(app: &mut App) {
+    app.add_systems(Startup, spawn_gold_bars);
     app.add_systems(Update, handle_gold_collected);
     app.add_systems(Update, handle_gold_dropped);
 }

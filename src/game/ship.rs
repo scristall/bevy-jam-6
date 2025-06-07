@@ -49,7 +49,6 @@ pub fn move_ship(
 pub fn reset_ship_position(
     mut ship_query: Query<(&mut Transform, &Ship)>,
     game_state: Res<State<GameState>>,
-    mut next_state: ResMut<NextState<GameState>>,
 ) {
     if game_state.get() == &GameState::Building {
         for (mut transform, ship) in ship_query.iter_mut() {
@@ -59,6 +58,7 @@ pub fn reset_ship_position(
 }
 
 pub fn plugin(app: &mut App) {
+    app.add_systems(Startup, spawn_ship);
     app.add_systems(Update, (move_ship, reset_ship_position));
 }
 

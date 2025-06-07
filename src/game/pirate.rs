@@ -1,17 +1,16 @@
 use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
-use crate::game::components::*;
+use crate::game::components::Position;
+use crate::game::events::GoldBarCollected;
 use crate::game::game_state::GameState;
-use crate::game::goldbar::Gold;
 use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
-use crate::game::events::{TileEvent, GoldBarCollected, GoldBarDropped};
-
-
 
 use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
 use grid_util::point::Point;
+
+const SPAWN_INTERVAL: f32 = 2.0;
 
 pub enum PirateState {
     PathingGold,
@@ -19,8 +18,43 @@ pub enum PirateState {
 }
 
 #[derive(Component)]
+pub struct Oxygen(pub f32);
+
+#[derive(Component)]
+pub struct MovementSpeed(pub f32);
+
+#[derive(Component)]
+pub struct Path(pub Vec<Vec2>);
+
+#[derive(Component)]
+pub struct CurrentTarget(pub Vec2);
+
+#[derive(Component)]
+pub struct Spawner;
+
+#[derive(Component)]
+pub struct SpawnTimer(pub Timer);
+
+#[derive(Component)]
 pub struct Pirate {
     state: PirateState,
+}
+
+#[derive(Resource)]
+pub struct WaveState {
+    pub current_wave: u32,
+    pub pirates_per_wave: u32,
+    pub pirates_spawned: u32,
+}
+
+impl Default for WaveState {
+    fn default() -> Self {
+        Self {
+            current_wave: 1,
+            pirates_per_wave: 5,
+            pirates_spawned: 0,
+        }
+    }
 }
 
 impl Pirate {}
@@ -72,7 +106,6 @@ fn find_closest_gold(
 
 const BOAT_POINT: Point = Point { x: 0, y: 5 };
 
-
 fn pirate_movement_system(
     time: Res<Time>,
     mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed)>,
@@ -111,8 +144,11 @@ fn pirate_movement_system(
 
                 if pirate_location.distance(nearest_gold_location) < 2.0 {
                     pirate.state = PirateState::PathingExit;
-                    let tile = Tile { x: nearest_gold_point.x, y: nearest_gold_point.y };
-                    event_gold_picked_up.write(GoldBarCollected{
+                    let tile = Tile {
+                        x: nearest_gold_point.x,
+                        y: nearest_gold_point.y,
+                    };
+                    event_gold_picked_up.write(GoldBarCollected {
                         tile: tile,
                         entity: entity,
                     });
@@ -120,7 +156,7 @@ fn pirate_movement_system(
 
                 nearest_gold_point
             }
-            None => BOAT_POINT
+            None => BOAT_POINT,
         };
 
         let start: Point;
@@ -136,7 +172,6 @@ fn pirate_movement_system(
             }
         }
 
-
         let path: Option<Vec<Point>> = pathing_grid.get_path_single_goal(start, end, false);
 
         let target_vec: Vec2 = match &path {
@@ -151,7 +186,7 @@ fn pirate_movement_system(
 
                 grid_coord_to_transform(&target_point)
             }
-            None => grid_coord_to_transform(&end)
+            None => grid_coord_to_transform(&end),
         };
 
         let mut direction_vec: Vec2 = target_vec - pirate_location;
@@ -166,7 +201,6 @@ pub fn pirate_spawn_system(
     mut commands: Commands,
     time: Res<Time>,
     mut spawners: Query<(&mut SpawnTimer, &Transform), With<Spawner>>,
-    game_config: Res<GameConfig>,
     mut wave_state: ResMut<WaveState>,
     asset_server: Res<AssetServer>,
 ) {
@@ -193,7 +227,21 @@ pub fn pirate_spawn_system(
     }
 }
 
+fn spawn_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn spawner
+    commands.spawn((
+        Spawner,
+        SpawnTimer(Timer::from_seconds(
+            SPAWN_INTERVAL,
+            TimerMode::Repeating,
+        )),
+        Transform::default(),
+    ));
+}
+
 pub fn plugin(app: &mut App) {
+    app.init_resource::<WaveState>();
+    app.add_systems(Startup, spawn_setup);
     app.add_systems(
         Update,
         (pirate_spawn_system, pirate_movement_system).run_if(in_state(GameState::WaveInProgress)),
