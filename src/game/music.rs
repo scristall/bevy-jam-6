@@ -29,8 +29,12 @@ fn wave_start_music(
     for _ in evr_wave_started.read() {
         commands.spawn((
             Music,
-            AudioPlayer::new(asset_server.load("audio/music/wellerman.ogg")),
-            PlaybackSettings::LOOP,
+            AudioPlayer::new(asset_server.load("audio/music/wellerman2.ogg")),
+            PlaybackSettings {
+                mode: bevy::audio::PlaybackMode::Loop,
+                volume: Volume::Linear(0.8),
+                ..default()
+            },
         ));
     }
 }
