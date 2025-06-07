@@ -55,8 +55,8 @@ fn grid_coord_to_transform(p: &Point) -> Vec2 {
 
 fn vec_to_grid_coord(v: &Vec2) -> Point {
     Point {
-        x: ((v.x - GRID_X_START) / TILE_SIZE) as i32,
-        y: ((v.y - GRID_Y_START) / TILE_SIZE) as i32,
+        x: ((v.x - GRID_X_START + TILE_SIZE / 2.0) / TILE_SIZE) as i32,
+        y: ((v.y - GRID_Y_START + TILE_SIZE / 2.0) / TILE_SIZE) as i32,
     }
 }
 
@@ -146,6 +146,7 @@ fn pirate_movement_system(
             None => BOAT_POINT,
         };
 
+
         let start: Point;
         let end: Point;
         match pirate.state {
@@ -203,7 +204,7 @@ pub fn pirate_spawn_system(
                     image: asset_server.load("images/pirate.png"),
                     ..default()
                 },
-                Transform::from_xyz(-600.0, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
+                Transform::from_xyz(GRID_X_START, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
                 MovementSpeed(200.0),
                 Oxygen(100.0),
             ));

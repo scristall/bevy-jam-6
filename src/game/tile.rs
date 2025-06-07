@@ -55,7 +55,7 @@ fn setup(
     let rect = Rectangle::new(TILE_SIZE, TILE_SIZE);
     let color = Color::linear_rgba(1.0, 1.0, 1.0, 1.0);
 
-    for x in 0..width {
+    for x in 1..width {
         for y in 0..height {
             let tile = Tile { x, y };
             commands.spawn((
