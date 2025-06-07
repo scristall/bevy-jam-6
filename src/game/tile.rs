@@ -79,24 +79,18 @@ fn mouse_events(
             Entity,
             &Tile,
             &mut BackgroundTile,
-            &MeshMaterial2d<ColorMaterial>,
             &GlobalTransform,
             &mut Transform,
         ),
         With<BackgroundTile>,
     >,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     mouse_pos: Res<MousePos>,
     mut evr_tile_mouse_down: EventWriter<TileMouseDown>,
     mut evr_tile_mouse_up: EventWriter<TileMouseUp>,
     mut evr_tile_mouse_move: EventWriter<TileMouseMove>,
 ) {
-    for (_, tile, mut background_tile, material, g_transform, mut transform) in q_tile.iter_mut() {
-        let Some(material) = materials.get_mut(material) else {
-            continue;
-        };
-
+    for (_, tile, mut background_tile, g_transform, mut transform) in q_tile.iter_mut() {
         if !tile.contains(mouse_pos.0, g_transform) {
             transform.translation.z = -1.0;
             background_tile.is_hovered = false;
