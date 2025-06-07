@@ -13,6 +13,7 @@ mod goldbar;
 mod goldbar_text;
 mod mouse;
 mod pirate;
+mod oxygen;
 mod tile;
 mod prizes;
 mod tutorial;
@@ -40,6 +41,7 @@ impl Plugin for GamePlugin {
             .add_plugins(ship::plugin)
             .add_plugins(GoldBarTextPlugin)
             .add_plugins(goldbar::plugin)
+            .add_plugins(oxygen::plugin)
             .add_plugins(music::plugin);
     }
 }

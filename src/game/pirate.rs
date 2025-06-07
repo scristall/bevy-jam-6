@@ -2,8 +2,9 @@ use bevy::prelude::*;
 
 use crate::game::chain::ChainSegment;
 use crate::game::components::Position;
-use crate::game::events::GoldBarCollected;
+use crate::game::events::{GoldBarCollected, PirateDeath, WaveComplete, WaveStarted};
 use crate::game::game_state::GameState;
+use crate::game::oxygen::Oxygen;
 use crate::game::tile::{GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
 
 use grid_pathfinding::PathingGrid;
@@ -16,9 +17,6 @@ pub enum PirateState {
     PathingGold,
     PathingExit,
 }
-
-#[derive(Component)]
-pub struct Oxygen(pub f32);
 
 #[derive(Component)]
 pub struct MovementSpeed(pub f32);
@@ -40,21 +38,10 @@ pub struct Pirate {
     state: PirateState,
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 pub struct WaveState {
-    pub current_wave: u32,
     pub pirates_per_wave: u32,
     pub pirates_spawned: u32,
-}
-
-impl Default for WaveState {
-    fn default() -> Self {
-        Self {
-            current_wave: 1,
-            pirates_per_wave: 5,
-            pirates_spawned: 0,
-        }
-    }
 }
 
 impl Pirate {}
@@ -200,11 +187,10 @@ fn pirate_movement_system(
 pub fn pirate_spawn_system(
     mut commands: Commands,
     time: Res<Time>,
-    mut spawners: Query<(&mut SpawnTimer, &Transform), With<Spawner>>,
-    mut wave_state: ResMut<WaveState>,
+    mut spawners: Query<(Entity, &mut SpawnTimer, &mut WaveState), With<Spawner>>,
     asset_server: Res<AssetServer>,
 ) {
-    for (mut timer, transform) in spawners.iter_mut() {
+    for (entity, mut timer, mut wave_state) in spawners.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() && wave_state.pirates_spawned < wave_state.pirates_per_wave {
             let y_coord: f32 = (wave_state.pirates_spawned as f32 - 2.0) * 100.0;
@@ -223,27 +209,79 @@ pub fn pirate_spawn_system(
             ));
 
             wave_state.pirates_spawned += 1;
+            if wave_state.pirates_spawned == wave_state.pirates_per_wave {
+                commands.entity(entity).despawn();
+            }
         }
     }
 }
 
-fn spawn_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Spawn spawner
-    commands.spawn((
-        Spawner,
-        SpawnTimer(Timer::from_seconds(
-            SPAWN_INTERVAL,
-            TimerMode::Repeating,
-        )),
-        Transform::default(),
-    ));
+fn pirate_touching_chain_system(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut q_pirates: Query<(&mut Oxygen, &Transform, Entity)>,
+    q_chain: Query<(&ChainSegment, &Transform)>,
+    mut event_pirate_death: EventWriter<PirateDeath>,
+) {
+    for (mut oxygen, transform, entity) in q_pirates.iter_mut() {
+        for chain_seg in q_chain.iter() {
+            // if pirate is next to a chain, deplete oxygen
+            let chain_point = chain_seg.1.translation.xy();
+            let pirate_point = transform.translation.xy();
+            let dx = (chain_point.x - pirate_point.x).abs() as f32;
+            let dy = (chain_point.y - pirate_point.y).abs() as f32;
+
+            // add a little buffer
+            if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
+                oxygen.0 -= 10.0 * time.delta().as_secs_f32();
+                if oxygen.0 <= 0.0 {
+                    event_pirate_death.write(PirateDeath { entity });
+                    commands.entity(entity).despawn();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn end_wave_system(
+    q_pirates: Query<Entity, With<Pirate>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut evr_pirate_death: EventReader<PirateDeath>,
+    mut evw_wave_complete: EventWriter<WaveComplete>,
+) {
+    for _ in evr_pirate_death.read() {
+        if q_pirates.iter().count() == 0 {
+            next_state.set(GameState::Prize);
+            evw_wave_complete.write(WaveComplete);
+        }
+    }
+}
+
+fn spawn_setup(mut commands: Commands, mut evr_wave_started: EventReader<WaveStarted>) {
+    for _ in evr_wave_started.read() {
+        // Spawn spawner
+        commands.spawn((
+            Spawner,
+            SpawnTimer(Timer::from_seconds(SPAWN_INTERVAL, TimerMode::Repeating)),
+            WaveState {
+                pirates_per_wave: 5,
+                pirates_spawned: 0,
+            },
+        ));
+    }
 }
 
 pub fn plugin(app: &mut App) {
-    app.init_resource::<WaveState>();
-    app.add_systems(Startup, spawn_setup);
     app.add_systems(
         Update,
-        (pirate_spawn_system, pirate_movement_system).run_if(in_state(GameState::WaveInProgress)),
+        (
+            spawn_setup,
+            pirate_spawn_system,
+            pirate_movement_system,
+            pirate_touching_chain_system,
+            end_wave_system,
+        )
+            .run_if(in_state(GameState::WaveInProgress)),
     );
 }
