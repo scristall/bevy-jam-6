@@ -1,4 +1,5 @@
 use bevy::{audio::Volume, prelude::*};
+use rand::prelude::*;
 
 use crate::game::events::{WaveComplete, WaveStarted};
 
@@ -21,15 +22,24 @@ fn wave_end_music(
     }
 }
 
+const MUSIC_LIST: &'static [&'static str] = &[
+    "audio/music/wellerman.ogg", 
+    "audio/music/wellerman2.ogg", 
+    "audio/music/wellerman3.ogg"
+];
+
 fn wave_start_music(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut evr_wave_started: EventReader<WaveStarted>,
 ) {
     for _ in evr_wave_started.read() {
+        
+        let mut rng = rand::thread_rng();
+        let music_idx = rng.gen_range(0..MUSIC_LIST.len());
         commands.spawn((
             Music,
-            AudioPlayer::new(asset_server.load("audio/music/wellerman2.ogg")),
+            AudioPlayer::new(asset_server.load(MUSIC_LIST[music_idx])),
             PlaybackSettings {
                 mode: bevy::audio::PlaybackMode::Loop,
                 volume: Volume::Linear(0.8),
