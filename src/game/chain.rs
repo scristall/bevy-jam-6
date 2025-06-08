@@ -4,7 +4,7 @@ use crate::game::events::{CrateSpawned, TileMouseDown, TileMouseMove, PlayClickS
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
-use crate::game::tile::{TILE_SIZE, Tile};
+use crate::game::tile::{Direction, TILE_SIZE, Tile};
 
 
 
@@ -44,7 +44,10 @@ pub struct DraggingChain {
 }
 
 #[derive(Component, Debug)]
-pub struct ChainSegment(pub Tile);
+pub struct ChainSegment {
+    pub prev_tile: Option<Tile>,
+    pub tile: Tile,
+}
 
 #[derive(Component)]
 pub struct Crate;
@@ -52,22 +55,132 @@ pub struct Crate;
 fn spawn_chain_segment(
     e_chain: Entity,
     commands: &mut Commands,
+    prev_tile: Option<Tile>,
     tile: Tile,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
+    asset_server: &ResMut<AssetServer>,
 ) {
-    let rect = Rectangle::new(TILE_SIZE, TILE_SIZE);
-    let color = Color::linear_rgba(1.0, 0.0, 0.0, 1.0);
-
+    let (sprite, rot_degrees) = if let Some(prev_tile) = prev_tile {
+        let direction = tile.get_adjacent_tile_direction(&prev_tile);
+        let sprite =
+            Sprite::from_image(asset_server.load("images/chain-link-single-to-straight.png"));
+        let rot_degrees = match direction {
+            Some(Direction::Up) => 180.0,
+            Some(Direction::Down) => 0.0,
+            Some(Direction::Left) => 270.0,
+            Some(Direction::Right) => 90.0,
+            None => 0.0,
+        };
+        (sprite, rot_degrees)
+    } else {
+        (
+            Sprite::from_image(asset_server.load("images/chain-link-single.png")),
+            0.0,
+        )
+    };
+    let rot = Quat::from_rotation_z((rot_degrees as f32).to_radians());
     commands.entity(e_chain).with_children(|parent| {
         parent.spawn((
             tile,
-            Mesh2d(meshes.add(rect)),
-            MeshMaterial2d(materials.add(color)),
-            ChainSegment(tile),
-            tile.grid_coord_to_transform(3.0),
+            Sprite {
+                custom_size: Some(Vec2::splat(TILE_SIZE)),
+                ..sprite
+            },
+            ChainSegment { prev_tile, tile },
+            tile.grid_coord_to_transform(3.0).with_rotation(rot),
         ));
     });
+}
+
+fn update_chain_segment(
+    chain_segment: &mut ChainSegment,
+    next_tile: Tile,
+    sprite: &mut Sprite,
+    transform: &mut Transform,
+    asset_server: &ResMut<AssetServer>,
+) {
+    let direction_to_next = chain_segment.tile.get_adjacent_tile_direction(&next_tile);
+    let direction_to_prev = if chain_segment.prev_tile.is_none() {
+        None
+    } else {
+        let prev_tile = chain_segment.prev_tile.unwrap();
+        let direction = chain_segment.tile.get_adjacent_tile_direction(&prev_tile);
+        direction
+    };
+
+    // if direction_to_prev is none, we are the first in the chain
+    if direction_to_prev.is_none() {
+        // we still need to update the transform, based on direction_to_next
+        let rot_degrees = match direction_to_next {
+            Some(Direction::Up) => 180.0,
+            Some(Direction::Down) => 0.0,
+            Some(Direction::Left) => 270.0,
+            Some(Direction::Right) => 90.0,
+            None => 0.0,
+        };
+        let rot = Quat::from_rotation_z((rot_degrees as f32).to_radians());
+        *transform = transform.with_rotation(rot);
+        sprite.image = asset_server.load("images/chain-link-single-to-straight.png");
+        return;
+    }
+
+    // we should only be here if both direction_to_next and direction_to_prev are some
+    if direction_to_next.is_none() || direction_to_prev.is_none() {
+        return;
+    }
+
+    let direction_to_next = direction_to_next.unwrap();
+    let direction_to_prev = direction_to_prev.unwrap();
+
+    // if direction_to_next is the opposite of direction_to_prev, we are on a straight
+    if direction_to_next == direction_to_prev.opposite() {
+        // rotation is either 90 or 0
+        let rot_degrees = match direction_to_next {
+            Direction::Up => 0.0,
+            Direction::Down => 180.0,
+            Direction::Left => 270.0,
+            Direction::Right => 90.0,
+        };
+        let rot = Quat::from_rotation_z((rot_degrees as f32).to_radians());
+        *transform = transform.with_rotation(rot);
+        sprite.image = asset_server.load("images/chain-link-link-to-straight.png");
+        return;
+    }
+
+    // if we are here, we are on a corner
+    let rot_degrees = match direction_to_next {
+        Direction::Up => {
+            if direction_to_prev == Direction::Right {
+                0.0
+            } else {
+                90.0
+            }
+        }
+        Direction::Down => {
+            if direction_to_prev == Direction::Left {
+                180.0
+            } else {
+                270.0
+            }
+        }
+        Direction::Left => {
+            if direction_to_prev == Direction::Down {
+                180.0
+            } else {
+                90.0
+            }
+        }
+        Direction::Right => {
+            if direction_to_prev == Direction::Up {
+                0.0
+            } else {
+                270.0
+            }
+        }
+    };
+
+    let rot = Quat::from_rotation_z((rot_degrees as f32).to_radians());
+    *transform = transform.with_rotation(rot);
+    sprite.image = asset_server.load("images/chain-link-link-to-corner.png");
 }
 
 pub fn spawn_chain_button<T: Component + Default>(
@@ -202,9 +315,8 @@ fn setup(mut commands: Commands, asset_server: ResMut<AssetServer>) {
 fn begin_chain(
     mut commands: Commands,
     mut tile_clicked_events: EventReader<TileMouseDown>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut evw_chain_placed: EventWriter<ChainPlaced>,
+    asset_server: ResMut<AssetServer>,
     q_dragging_chain: Query<&DraggingChain>,
     q_selected_chain: Query<(&SelectedChain, &ChainButton), Without<DraggingChain>>,
     q_chain_segments: Query<&ChainSegment>,
@@ -231,7 +343,7 @@ fn begin_chain(
         // if there is a chain segment at this position, do nothing
         if q_chain_segments
             .iter()
-            .any(|segment| segment.0 == event.0.tile)
+            .any(|segment| segment.tile == event.0.tile)
         {
             continue;
         }
@@ -252,29 +364,28 @@ fn begin_chain(
                 e_chain,
             },
             // reference to current segment tile
-            ChainSegment(event.0.tile),
+            ChainSegment {
+                prev_tile: None,
+                tile: event.0.tile,
+            },
         ));
 
-        spawn_chain_segment(
-            e_chain,
-            &mut commands,
-            event.0.tile,
-            &mut meshes,
-            &mut materials,
-        );
-
         evw_chain_placed.write(ChainPlaced);
+        spawn_chain_segment(e_chain, &mut commands, None, event.0.tile, &asset_server);
     }
 }
 
 fn drag_chain(
     mut commands: Commands,
     mut tile_mouse_move_events: EventReader<TileMouseMove>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: ResMut<AssetServer>,
     mut q_dragging_chain: Query<(&mut DraggingChain, &mut ChainSegment)>,
     mut evw_chain_placed: EventWriter<ChainPlaced>,
-    q_chain_segments: Query<&ChainSegment, Without<DraggingChain>>,
+    mut q_chain_segments: Query<
+        (&mut ChainSegment, &mut Sprite, &mut Transform),
+        Without<DraggingChain>,
+    >,
+    q_chain: Query<(Entity, &Children), With<Chain>>,
 ) {
     // get the dragging chain
     if q_dragging_chain.single().is_err() {
@@ -291,29 +402,59 @@ fn drag_chain(
     // get the tile mouse move events
     for event in tile_mouse_move_events.read() {
         // make sure the tile is in an adjacent tile to the current chain segment
-        if !current_chain_segment.0.is_adjacent(&event.0.tile) {
+        if !current_chain_segment.tile.is_adjacent(&event.0.tile) {
             continue;
         }
 
         // make sure there isn't already a chain segment at this position
         if q_chain_segments
             .iter()
-            .any(|segment| segment.0 == event.0.tile)
+            .any(|segment| segment.0.tile == event.0.tile)
         {
             continue;
         }
 
-        dragging_chain.remaining_length -= 1;
-        current_chain_segment.0 = event.0.tile;
+        let prev_chain_segs = q_chain
+            .iter()
+            .find(|(entity, _)| entity == &dragging_chain.e_chain);
+
+        if let Some((_, children)) = prev_chain_segs {
+            for child in children.iter() {
+                let (mut segment, mut sprite, mut transform) =
+                    q_chain_segments.get_mut(child).unwrap();
+                if segment.tile != current_chain_segment.tile {
+                    continue;
+                }
+                update_chain_segment(
+                    &mut segment,
+                    event.0.tile,
+                    &mut sprite,
+                    &mut transform,
+                    &asset_server,
+                );
+            }
+        }
+
+        // update_chain_segment(
+        //     current_chain_segment.tile,
+        //     event.0.tile,
+        //     &mut sprite,
+        //     &mut transform,
+        //     &asset_server,
+        // );
 
         spawn_chain_segment(
             dragging_chain.e_chain,
             &mut commands,
+            Some(current_chain_segment.tile),
             event.0.tile,
-            &mut meshes,
-            &mut materials,
+            &asset_server,
         );
         evw_chain_placed.write(ChainPlaced);
+
+        dragging_chain.remaining_length -= 1;
+        current_chain_segment.prev_tile = Some(current_chain_segment.tile);
+        current_chain_segment.tile = event.0.tile;
     }
 }
 
@@ -370,8 +511,7 @@ fn end_chain(
 fn handle_crate_spawned(
     mut commands: Commands,
     mut crate_spawned_events: EventReader<CrateSpawned>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: ResMut<AssetServer>,
 ) {
     for event in crate_spawned_events.read() {
         let e_crate = commands
@@ -382,13 +522,7 @@ fn handle_crate_spawned(
             ))
             .id();
 
-        spawn_chain_segment(
-            e_crate,
-            &mut commands,
-            event.tile,
-            &mut meshes,
-            &mut materials,
-        );
+        spawn_chain_segment(e_crate, &mut commands, None, event.tile, &asset_server);
     }
 }
 pub fn plugin(app: &mut App) {

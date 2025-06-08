@@ -101,7 +101,7 @@ pub fn get_pathing_grid(chain_segs: Query<&ChainSegment>) -> PathingGrid {
     pathing_grid.allow_diagonal_move = false;
 
     for chain_seg in chain_segs.iter() {
-        pathing_grid.set(chain_seg.0.x as usize, chain_seg.0.y as usize, true);
+        pathing_grid.set(chain_seg.tile.x as usize, chain_seg.tile.y as usize, true);
     }
 
     // set the back wall

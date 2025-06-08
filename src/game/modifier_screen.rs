@@ -149,7 +149,10 @@ fn mouse_down_on_modifier_choice_button(
             commands.entity(e_modifier_window).despawn();
 
             // get a list of tiles occupied by the chain
-            let chain_tiles = q_chain_segments.iter().map(|seg| seg.0).collect::<Vec<_>>();
+            let chain_tiles = q_chain_segments
+                .iter()
+                .map(|seg| seg.tile)
+                .collect::<Vec<_>>();
 
             // create list of tiles that are not occupied by the chain
             let mut free_tiles = Vec::new();

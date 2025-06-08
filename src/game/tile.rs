@@ -3,10 +3,10 @@ use bevy::prelude::*;
 use crate::game::events::{TileEvent, TileMouseDown, TileMouseMove, TileMouseUp};
 use crate::game::mouse::MousePos;
 
-pub const TILE_SIZE: f32 = 53.0;
+pub const TILE_SIZE: f32 = 54.0;
 
-pub const GRID_X_START: f32 = -620.0;
-pub const GRID_Y_START: f32 = -200.0;
+pub const GRID_X_START: f32 = -625.0;
+pub const GRID_Y_START: f32 = -205.0;
 
 pub const GRID_WIDTH: i32 = 25;
 pub const GRID_HEIGHT: i32 = 11;
@@ -20,6 +20,25 @@ pub struct Tile {
 #[derive(Component, Debug)]
 pub struct BackgroundTile {
     pub is_hovered: bool,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    pub fn opposite(&self) -> Self {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
 }
 
 impl Tile {
@@ -36,6 +55,28 @@ impl Tile {
         let dx = (self.x - other.x).abs();
         let dy = (self.y - other.y).abs();
         (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
+    }
+
+    pub fn get_adjacent_tile_direction(&self, other: &Tile) -> Option<Direction> {
+        if !self.is_adjacent(other) {
+            return None;
+        }
+
+        if self.x == other.x {
+            if self.y < other.y {
+                Some(Direction::Up)
+            } else {
+                Some(Direction::Down)
+            }
+        } else if self.y == other.y {
+            if self.x > other.x {
+                Some(Direction::Left)
+            } else {
+                Some(Direction::Right)
+            }
+        } else {
+            None
+        }
     }
 
     pub fn grid_coord_to_transform(&self, z: f32) -> Transform {
