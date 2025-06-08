@@ -6,6 +6,7 @@ use crate::game::events::{
 };
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
+use crate::game::modifiers::{Sticky, Tree};
 use crate::game::oxygen::Oxygen;
 use crate::game::tile::{GRID_HEIGHT, GRID_WIDTH, GRID_X_START, GRID_Y_START, TILE_SIZE, Tile};
 
@@ -120,14 +121,20 @@ pub fn get_pathing_grid(chain_segs: Query<&Obstacle>) -> PathingGrid {
 fn pirate_movement_system(
     mut commands: Commands,
     time: Res<Time>,
-    mut pirates: Query<(Entity, &mut Pirate, &mut Transform, &MovementSpeed)>,
+    mut pirates: Query<(
+        Entity,
+        &mut Pirate,
+        &mut Transform,
+        &MovementSpeed,
+        Option<&Sticky>,
+    )>,
     q_obstacles: Query<&Obstacle>,
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
     let pathing_grid = get_pathing_grid(q_obstacles);
 
-    for (entity, mut pirate, mut transform, speed) in pirates.iter_mut() {
+    for (entity, mut pirate, mut transform, speed, sticky) in pirates.iter_mut() {
         let pirate_location = transform.translation.xy();
         let pirate_point = vec_to_grid_coord(&pirate_location);
 
@@ -184,9 +191,15 @@ fn pirate_movement_system(
             None => grid_coord_to_transform(&end),
         };
 
+        let speed = if sticky.is_some() {
+            speed.0 * 0.5
+        } else {
+            speed.0
+        };
+
         let mut direction_vec: Vec2 = target_vec - pirate_location;
         let distance = direction_vec.length();
-        let travel: f32 = speed.0 * time.delta().as_secs_f32();
+        let travel: f32 = speed * time.delta().as_secs_f32();
         direction_vec = direction_vec.normalize() * travel;
         if distance < travel {
             transform.translation.x = target_vec.x;
@@ -229,7 +242,7 @@ pub fn pirate_spawn_system(
                     image: asset_server.load("images/pirate.png"),
                     ..default()
                 },
-                Transform::from_xyz(GRID_X_START, y_coord, 2.0).with_scale(vec3(0.5, 0.5, 0.5)),
+                Transform::from_xyz(GRID_X_START, y_coord, 4.0).with_scale(vec3(0.5, 0.5, 0.5)),
                 MovementSpeed(movement_speed),
                 Oxygen(oxygen_level),
             ));
@@ -243,18 +256,30 @@ pub fn pirate_spawn_system(
     }
 }
 
-fn pirate_touching_chain_system(
+fn pirate_oxygen_system(
     time: Res<Time>,
     mut commands: Commands,
     mut q_pirates: Query<(&Pirate, &mut Oxygen, &Transform, Entity)>,
-    q_chain: Query<(&ChainSegment, &Transform)>,
+    q_chain: Query<&Transform, With<ChainSegment>>,
+    q_trees: Query<&Transform, With<Tree>>,
     mut evw_pirate_death: EventWriter<PirateDeath>,
     mut evw_gold_dropped: EventWriter<GoldBarDropped>,
 ) {
     for (pirate, mut oxygen, transform, entity) in q_pirates.iter_mut() {
+        for tree in q_trees.iter() {
+            let tree_pos = tree.translation.xy();
+            let pirate_pos = transform.translation.xy();
+            let dx = (tree_pos.x - pirate_pos.x).abs();
+            let dy = (tree_pos.y - pirate_pos.y).abs();
+
+            // add a little buffer
+            if dx <= TILE_SIZE * 1.2 && dy <= TILE_SIZE * 1.2 {
+                oxygen.0 += 30.0 * time.delta().as_secs_f32();
+            }
+        }
         for chain_seg in q_chain.iter() {
             // if pirate is next to a chain, deplete oxygen
-            let chain_pos = chain_seg.1.translation.xy();
+            let chain_pos = chain_seg.translation.xy();
             let pirate_pos = transform.translation.xy();
             let dx = (chain_pos.x - pirate_pos.x).abs();
             let dy = (chain_pos.y - pirate_pos.y).abs();
@@ -324,7 +349,7 @@ pub fn plugin(app: &mut App) {
             spawn_setup,
             pirate_spawn_system,
             pirate_movement_system,
-            pirate_touching_chain_system,
+            pirate_oxygen_system,
         )
             .run_if(in_state(GameState::WaveInProgress)),
     );

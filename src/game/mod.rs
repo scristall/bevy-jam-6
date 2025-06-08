@@ -18,7 +18,6 @@ mod music;
 mod oxygen;
 mod pirate;
 mod prizes;
-mod random;
 mod ship;
 mod sound_effects;
 mod tile;
@@ -31,7 +30,6 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
-            .add_plugins(random::plugin)
             .add_plugins(controls::plugin)
             .add_plugins(camera::plugin)
             .add_plugins(mouse::plugin)

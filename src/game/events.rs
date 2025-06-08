@@ -65,6 +65,16 @@ pub struct CrateSpawned {
     pub tile: Tile,
 }
 
+#[derive(Event)]
+pub struct GlueSpawned {
+    pub tile: Tile,
+}
+
+#[derive(Event)]
+pub struct TreeSpawned {
+    pub tile: Tile,
+}
+
 pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseDown>();
     app.add_event::<TileMouseUp>();
@@ -82,4 +92,6 @@ pub fn plugin(app: &mut App) {
     app.add_event::<PlayLongClickSFX>();
     app.add_event::<ChainPlaced>();
     app.add_event::<ChainFinished>();
+    app.add_event::<GlueSpawned>();
+    app.add_event::<TreeSpawned>();
 }

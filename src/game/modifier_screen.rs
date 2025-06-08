@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use grid_util::grid::Grid;
-use rand_chacha::rand_core::TryRngCore;
+use rand::RngCore;
 
-use crate::game::chain::Obstacle;
-use crate::game::events::{CrateSpawned, FoolsGoldSpawned, PrizeCollected};
+use crate::game::chain::{ChainSegment, Obstacle};
+use crate::game::events::{
+    CrateSpawned, FoolsGoldSpawned, GlueSpawned, PrizeCollected, TreeSpawned,
+};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
-use crate::game::random::RandomSource;
 use crate::game::tile::{GRID_HEIGHT, GRID_WIDTH, Tile};
 
 const MODIFIER_WINDOW_WIDTH: f32 = 1400.0;
@@ -21,16 +22,62 @@ pub struct ModifierScreen;
 #[derive(Component)]
 pub struct ModifierWindow;
 
-#[derive(Component, Debug)]
-pub enum ModifierChoiceButton {
-    #[allow(unused)]
+#[derive(Component)]
+pub struct ModifierChoiceButton;
+
+#[derive(Component, Clone, Copy, PartialEq)]
+pub enum GoodModifier {
     Glue,
     FoolsGold,
-    Crates,
+}
+
+#[derive(Component, Clone, Copy, PartialEq)]
+pub enum BadModifier {
+    Crate,
+    Tree,
+    BrokenChain,
 }
 
 #[derive(Component, Debug)]
 pub struct ModifierChoiceButtonText;
+
+impl BadModifier {
+    pub fn get_text(&self) -> &str {
+        match self {
+            BadModifier::Crate => "Crates",
+            BadModifier::Tree => "Tree",
+            BadModifier::BrokenChain => "Broken Chain",
+        }
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+        match rng.next_u64() % 3 {
+            0 => BadModifier::Crate,
+            1 => BadModifier::Tree,
+            2 => BadModifier::BrokenChain,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl GoodModifier {
+    pub fn get_text(&self) -> &str {
+        match self {
+            GoodModifier::Glue => "Glue Puddle",
+            GoodModifier::FoolsGold => "Fool's Gold",
+        }
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+        match rng.next_u64() % 2 {
+            0 => GoodModifier::Glue,
+            1 => GoodModifier::FoolsGold,
+            _ => unreachable!(),
+        }
+    }
+}
 
 fn on_wave_complete(
     mut evr_prize_collected: EventReader<PrizeCollected>,
@@ -80,49 +127,105 @@ fn on_wave_complete(
             ..default()
         };
 
-        parent
-            .spawn((
-                ModifierChoiceButton::FoolsGold,
-                Transform::from_xyz(-300.0, 0.0, 5.0),
-                Mesh2d(meshes.add(rect)),
-                MeshMaterial2d(materials.add(color)),
-            ))
-            .with_child((
-                ModifierChoiceButtonText,
-                Text2d::new("1x Fool's Gold"),
-                text_font.clone(),
-                TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
-            ));
-
-        // Not yet implemented
-        //parent
-        //    .spawn((
-        //        ModifierChoiceButton::Glue,
-        //        Transform::from_xyz(0.0, 0.0, 5.0),
-        //        Mesh2d(meshes.add(rect)),
-        //        MeshMaterial2d(materials.add(color)),
-        //        Visibility::Hidden,
-        //    ))
-        //    .with_child((
-        //        ModifierChoiceButtonText,
-        //        Text2d::new("2x Glue Puddle"),
-        //        text_font.clone(),
-        //        TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
-        //    ));
+        // Choice 1
+        let good_modifier = GoodModifier::random();
+        let bad_modifier = BadModifier::random();
 
         parent
             .spawn((
-                ModifierChoiceButton::Crates,
-                Transform::from_xyz(300.0, 0.0, 5.0),
+                ModifierChoiceButton,
+                good_modifier,
+                bad_modifier,
+                Transform::from_xyz(-300.0, -200.0, 5.0),
                 Mesh2d(meshes.add(rect)),
                 MeshMaterial2d(materials.add(color)),
             ))
-            .with_child((
-                ModifierChoiceButtonText,
-                Text2d::new("4x Crates"),
-                text_font.clone(),
-                TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
-            ));
+            .with_children(|parent| {
+                parent.spawn((
+                    Text2d::new(good_modifier.get_text()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 1.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 400.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(bad_modifier.get_text()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(1.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 200.0, 0.5),
+                ));
+
+                parent.spawn((
+                    ModifierChoiceButtonText,
+                    Text2d::new("Choose"),
+                    text_font.clone(),
+                    TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
+                    Transform::from_xyz(0.0, 0.0, 0.5),
+                ));
+            });
+
+        // Choice 2
+        let mut new_good_modifier;
+        let mut new_bad_modifier;
+        loop {
+            new_good_modifier = GoodModifier::random();
+            new_bad_modifier = BadModifier::random();
+            if new_good_modifier != good_modifier || new_bad_modifier != bad_modifier {
+                break;
+            }
+        }
+
+        let good_modifier = new_good_modifier;
+        let bad_modifier = new_bad_modifier;
+
+        parent
+            .spawn((
+                ModifierChoiceButton,
+                good_modifier,
+                bad_modifier,
+                Transform::from_xyz(300.0, -200.0, 5.0),
+                Mesh2d(meshes.add(rect)),
+                MeshMaterial2d(materials.add(color)),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
+                    Text2d::new(good_modifier.get_text()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 1.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 400.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(bad_modifier.get_text()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(1.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 200.0, 0.5),
+                ));
+
+                parent.spawn((
+                    ModifierChoiceButtonText,
+                    Text2d::new("Choose"),
+                    text_font.clone(),
+                    TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
+                    Transform::from_xyz(0.0, 0.0, 0.5),
+                ));
+            });
     });
 }
 
@@ -131,14 +234,18 @@ fn mouse_down_on_modifier_choice_button(
     mouse_pos: Res<MousePos>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<NextState<GameState>>,
-    mut random_source: ResMut<RandomSource>,
-    mut q_modifier_choice_buttons: Query<(&GlobalTransform, &ModifierChoiceButton)>,
+    mut q_modifier_choice_buttons: Query<
+        (&GlobalTransform, &GoodModifier, &BadModifier),
+        With<ModifierChoiceButton>,
+    >,
     q_modifier_window: Query<(Entity, &ModifierWindow)>,
-    q_obstacles: Query<&Obstacle>,
+    mut q_obstacles: Query<(Entity, &Obstacle, Option<&ChainSegment>)>,
     mut evw_fools_gold_spawned: EventWriter<FoolsGoldSpawned>,
     mut evw_crate_spawned: EventWriter<CrateSpawned>,
+    mut evw_glue_spawned: EventWriter<GlueSpawned>,
+    mut evw_tree_spawned: EventWriter<TreeSpawned>,
 ) {
-    for (transform, modifier_choice_button) in q_modifier_choice_buttons.iter_mut() {
+    for (transform, good_modifier, bad_modifier) in q_modifier_choice_buttons.iter_mut() {
         if mouse_pos.is_in(
             transform.translation().truncate(),
             MODIFIER_CHOICE_BUTTON_SIZE,
@@ -151,7 +258,7 @@ fn mouse_down_on_modifier_choice_button(
             // get a list of tiles occupied by the chain
             let chain_tiles = q_obstacles
                 .iter()
-                .map(|obstacle| obstacle.tile)
+                .map(|(_, obstacle, _)| obstacle.tile)
                 .collect::<Vec<_>>();
 
             // create list of tiles that are not occupied by the chain
@@ -165,22 +272,28 @@ fn mouse_down_on_modifier_choice_button(
                 }
             }
 
-            let rng = &mut random_source.0;
+            let mut rng = rand::thread_rng();
 
-            match modifier_choice_button {
-                ModifierChoiceButton::FoolsGold => {
+            match good_modifier {
+                GoodModifier::FoolsGold => {
                     // choose a random free tile
-                    let random_index = (rng.try_next_u32().unwrap() as usize) % free_tiles.len();
+                    let random_index = (rng.next_u64() as usize) % free_tiles.len();
                     let random_tile = free_tiles[random_index];
                     evw_fools_gold_spawned.write(FoolsGoldSpawned { tile: random_tile });
                 }
-                ModifierChoiceButton::Glue => {
-                    println!("Glue");
+                GoodModifier::Glue => {
+                    // choose a random free tile
+                    let random_index = (rng.next_u64() as usize) % free_tiles.len();
+                    let random_tile = free_tiles[random_index];
+                    evw_glue_spawned.write(GlueSpawned { tile: random_tile });
                 }
-                ModifierChoiceButton::Crates => {
+            }
+            match bad_modifier {
+                BadModifier::Crate => {
                     let mut non_blocking_free_tiles = Vec::new();
                     for tile in free_tiles.iter() {
-                        let mut pathing_grid = get_pathing_grid(q_obstacles);
+                        let mut q_obstacles_filtered = q_obstacles.transmute_lens::<&Obstacle>();
+                        let mut pathing_grid = get_pathing_grid(q_obstacles_filtered.query());
                         pathing_grid.set(tile.x as usize, tile.y as usize, true);
                         pathing_grid.generate_components();
 
@@ -195,10 +308,50 @@ fn mouse_down_on_modifier_choice_button(
 
                     for _ in 0..4 {
                         let random_index =
-                            (rng.try_next_u32().unwrap() as usize) % non_blocking_free_tiles.len();
+                            (rng.next_u64() as usize) % non_blocking_free_tiles.len();
                         let random_tile = non_blocking_free_tiles[random_index];
                         evw_crate_spawned.write(CrateSpawned { tile: *random_tile });
                     }
+                }
+                BadModifier::Tree => {
+                    let mut non_blocking_free_tiles = Vec::new();
+                    for tile in free_tiles.iter() {
+                        let mut q_obstacles_filtered = q_obstacles.transmute_lens::<&Obstacle>();
+                        let mut pathing_grid = get_pathing_grid(q_obstacles_filtered.query());
+                        pathing_grid.set(tile.x as usize, tile.y as usize, true);
+                        pathing_grid.generate_components();
+
+                        let start = BOAT_POINT;
+                        let end = HOLD_POINT;
+
+                        let path = pathing_grid.get_path_single_goal(start, end, false);
+                        if path.is_some() {
+                            non_blocking_free_tiles.push(tile);
+                        }
+                    }
+
+                    // choose a random free tile
+                    let random_index = (rng.next_u64() as usize) % non_blocking_free_tiles.len();
+                    let random_tile = non_blocking_free_tiles[random_index];
+                    evw_tree_spawned.write(TreeSpawned { tile: *random_tile });
+                }
+                BadModifier::BrokenChain => {
+                    // get list of tiles occupied by a chain segment
+                    let chain_tiles = q_obstacles
+                        .iter()
+                        .filter_map(|(entity, _, segment)| {
+                            if segment.is_some() {
+                                Some(entity)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    // choose a random tile from the list
+                    let random_index = (rng.next_u64() as usize) % chain_tiles.len();
+                    let random_chain_seg = chain_tiles[random_index];
+                    commands.entity(random_chain_seg).despawn();
                 }
             }
         }

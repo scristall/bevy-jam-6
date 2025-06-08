@@ -29,8 +29,6 @@ fn on_wave_complete(
 
     evr_wave_complete.clear();
 
-    println!("Wave complete");
-
     let rect = Rectangle::new(PRIZE_WINDOW_WIDTH, PRIZE_WINDOW_HEIGHT);
     let color = Color::linear_rgba(0.8, 0.8, 0.8, 1.0);
 
