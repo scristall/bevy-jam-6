@@ -521,7 +521,10 @@ fn handle_crate_spawned(
                 custom_size: Some(Vec2::splat(TILE_SIZE)),
                 ..sprite
             },
-            ChainSegment { prev_tile: None, tile },
+            ChainSegment {
+                prev_tile: None,
+                tile,
+            },
             tile.grid_coord_to_transform(3.0),
         ));
     }
