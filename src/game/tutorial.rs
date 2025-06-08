@@ -18,7 +18,7 @@ const OK_BUTTON_POS: Vec2 = Vec2::new(0.0, -400.0);
 const TUTORIAL_TEXT: &str = "
 Welcome to Chain Lockers!
 
-Chain Lockers are holds within ships to hold massive chains. These chains go through an oxidation recation, which rapidly depletes the oxygen in a ship's hold.
+Chain Lockers are holds within ships to hold massive chains. These chains go through an oxidation reaction, which rapidly depletes the oxygen in a ship's hold.
 
 In this game, you will place chains to asphyxiate pirates trying to steal your gold.
 
