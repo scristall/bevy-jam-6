@@ -103,8 +103,7 @@ fn update_chain_segment(
         None
     } else {
         let prev_tile = chain_segment.prev_tile.unwrap();
-        let direction = chain_segment.tile.get_adjacent_tile_direction(&prev_tile);
-        direction
+        chain_segment.tile.get_adjacent_tile_direction(&prev_tile)
     };
 
     // if direction_to_prev is none, we are the first in the chain
@@ -513,15 +512,18 @@ fn handle_crate_spawned(
     asset_server: ResMut<AssetServer>,
 ) {
     for event in crate_spawned_events.read() {
-        let e_crate = commands
-            .spawn((
-                Crate,
-                Transform::from_xyz(0.0, 0.0, 0.0),
-                Visibility::Visible,
-            ))
-            .id();
-
-        spawn_chain_segment(e_crate, &mut commands, None, event.tile, &asset_server);
+        let sprite = Sprite::from_image(asset_server.load("images/crate.png"));
+        let tile = event.tile;
+        commands.spawn((
+            tile,
+            Crate,
+            Sprite {
+                custom_size: Some(Vec2::splat(TILE_SIZE)),
+                ..sprite
+            },
+            ChainSegment { prev_tile: None, tile },
+            tile.grid_coord_to_transform(3.0),
+        ));
     }
 }
 pub fn plugin(app: &mut App) {

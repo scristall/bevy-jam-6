@@ -119,7 +119,7 @@ fn on_wave_complete(
             ))
             .with_child((
                 ModifierChoiceButtonText,
-                Text2d::new("4x Broken Chain"),
+                Text2d::new("4x Crates"),
                 text_font.clone(),
                 TextColor(Color::linear_rgba(1.0, 1.0, 1.0, 1.0)),
             ));
