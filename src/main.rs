@@ -5,8 +5,7 @@
 
 mod game;
 
-use bevy::prelude::*;
-use bevy::asset::AssetMetaCheck;
+use bevy::{asset::AssetMetaCheck, prelude::*};
 
 use game::*;
 

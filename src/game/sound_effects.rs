@@ -8,7 +8,6 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, on_gold_drop);
     app.add_systems(Update, on_wave_start);
     app.add_systems(Update, on_prize_collect);
-
 }
 
 fn on_pirate_death(
@@ -22,7 +21,6 @@ fn on_pirate_death(
         ));
     }
 }
-
 
 fn on_gold_pickup(
     mut commands: Commands,
