@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::text::{LineBreak, TextBounds};
 
-use crate::game::events::{PlayLongClickSFX};
+use crate::game::events::PlayLongClickSFX;
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 

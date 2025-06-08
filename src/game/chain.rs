@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
-use crate::game::events::{CrateSpawned, TileMouseDown, TileMouseMove, PlayClickSFX, ChainPlaced, ChainFinished};
+use crate::game::events::{
+    ChainFinished, ChainPlaced, CrateSpawned, PlayClickSFX, TileMouseDown, TileMouseMove,
+};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
 use crate::game::tile::{Direction, TILE_SIZE, Tile};
-
-
 
 pub const CHAIN_BUTTON_SIZE: f32 = 64.0;
 
@@ -504,7 +504,6 @@ fn end_chain(
         }
         evw_chain_finished.write(ChainFinished);
     }
-    
 }
 
 // for now, we just spawn crates as chain segments

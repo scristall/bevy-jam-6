@@ -120,10 +120,7 @@ fn on_chain_finished(
     }
 }
 
-fn wind_ocean_noise(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn wind_ocean_noise(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         AudioPlayer::new(asset_server.load("audio/sound_effects/ocean_wind_noise.ogg")),
         PlaybackSettings {
