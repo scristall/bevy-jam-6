@@ -52,8 +52,6 @@ fn on_gold_drop(
 }
 
 fn on_wave_start(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut evr_wave_started: EventReader<WaveStarted>,
     mut evw: EventWriter<PlayLongClickSFX>,
 ) {
