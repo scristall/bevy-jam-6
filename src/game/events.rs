@@ -44,6 +44,18 @@ pub struct PrizeCollected;
 pub struct GameOver;
 
 #[derive(Event)]
+pub struct PlayClickSFX;
+
+#[derive(Event)]
+pub struct PlayLongClickSFX;
+
+#[derive(Event)]
+pub struct ChainPlaced;
+
+#[derive(Event)]
+pub struct ChainFinished;
+
+#[derive(Event)]
 pub struct FoolsGoldSpawned {
     pub tile: Tile,
 }
@@ -66,4 +78,8 @@ pub fn plugin(app: &mut App) {
     app.add_event::<GameOver>();
     app.add_event::<FoolsGoldSpawned>();
     app.add_event::<CrateSpawned>();
+    app.add_event::<PlayClickSFX>();
+    app.add_event::<PlayLongClickSFX>();
+    app.add_event::<ChainPlaced>();
+    app.add_event::<ChainFinished>();
 }

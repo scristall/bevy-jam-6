@@ -6,7 +6,7 @@ use crate::game::events::{WaveComplete, WaveStarted};
 pub struct Music;
 
 fn set_volume(mut global_volume: ResMut<GlobalVolume>) {
-    global_volume.volume = Volume::Linear(0.1);
+    global_volume.volume = Volume::Linear(0.3);
 }
 
 fn wave_end_music(

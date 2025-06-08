@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 
-use crate::game::events::{CrateSpawned, TileMouseDown, TileMouseMove};
+use crate::game::events::{CrateSpawned, TileMouseDown, TileMouseMove, PlayClickSFX, ChainPlaced, ChainFinished};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 use crate::game::pirate::{BOAT_POINT, HOLD_POINT, get_pathing_grid};
 use crate::game::tile::{TILE_SIZE, Tile};
+
+
 
 pub const CHAIN_BUTTON_SIZE: f32 = 64.0;
 
@@ -130,6 +132,7 @@ fn mouse_down_on_chain_button_in_inventory(
         ),
         With<MainInventoryChainButton>,
     >,
+    mut evw_sfx: EventWriter<PlayClickSFX>,
 ) {
     let mut new_chain_selected = false;
 
@@ -141,6 +144,7 @@ fn mouse_down_on_chain_button_in_inventory(
             if mouse_button.just_pressed(MouseButton::Left) {
                 sprite.color = Color::linear_rgba(0.0, 1.0, 0.0, 1.0);
                 commands.entity(entity).insert(SelectedChain);
+                evw_sfx.write(PlayClickSFX);
                 new_chain_selected = true;
                 break;
             } else {
@@ -200,6 +204,7 @@ fn begin_chain(
     mut tile_clicked_events: EventReader<TileMouseDown>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut evw_chain_placed: EventWriter<ChainPlaced>,
     q_dragging_chain: Query<&DraggingChain>,
     q_selected_chain: Query<(&SelectedChain, &ChainButton), Without<DraggingChain>>,
     q_chain_segments: Query<&ChainSegment>,
@@ -257,6 +262,8 @@ fn begin_chain(
             &mut meshes,
             &mut materials,
         );
+
+        evw_chain_placed.write(ChainPlaced);
     }
 }
 
@@ -266,6 +273,7 @@ fn drag_chain(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut q_dragging_chain: Query<(&mut DraggingChain, &mut ChainSegment)>,
+    mut evw_chain_placed: EventWriter<ChainPlaced>,
     q_chain_segments: Query<&ChainSegment, Without<DraggingChain>>,
 ) {
     // get the dragging chain
@@ -305,6 +313,7 @@ fn drag_chain(
             &mut meshes,
             &mut materials,
         );
+        evw_chain_placed.write(ChainPlaced);
     }
 }
 
@@ -314,6 +323,7 @@ fn end_chain(
     q_dragging_chain: Query<(Entity, &DraggingChain)>,
     mut q_selected_chain: Query<(&mut ChainButton, &Children), With<SelectedChain>>,
     mut q_stock_text: Query<&mut Text2d, With<ChainButtonStock>>,
+    mut evw_chain_finished: EventWriter<ChainFinished>,
     q_chain_segments: Query<&ChainSegment>,
 ) {
     if !mouse_button.just_released(MouseButton::Left) {
@@ -351,7 +361,9 @@ fn end_chain(
                 text.0 = format!("{}", chain_in_inventory.stock);
             }
         }
+        evw_chain_finished.write(ChainFinished);
     }
+    
 }
 
 // for now, we just spawn crates as chain segments

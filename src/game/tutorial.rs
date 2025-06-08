@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::text::{LineBreak, TextBounds};
 
+use crate::game::events::{PlayLongClickSFX};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
 
@@ -114,6 +115,7 @@ fn ok_button(
     mouse_button: Res<ButtonInput<MouseButton>>,
     mut state: ResMut<NextState<GameState>>,
     q_tutorial_window: Query<(Entity, &TutorialWindow)>,
+    mut evw: EventWriter<PlayLongClickSFX>,
 ) {
     if mouse_button.just_pressed(MouseButton::Left)
         && mouse_pos.is_in(OK_BUTTON_POS, OK_BUTTON_SIZE)
@@ -121,6 +123,7 @@ fn ok_button(
         state.set(GameState::Building);
         let (e_tutorial_window, _) = q_tutorial_window.single().unwrap();
         commands.entity(e_tutorial_window).despawn();
+        evw.write(PlayLongClickSFX);
     }
 }
 
