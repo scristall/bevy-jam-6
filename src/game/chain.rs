@@ -50,6 +50,11 @@ pub struct ChainSegment {
 }
 
 #[derive(Component)]
+pub struct Obstacle {
+    pub tile: Tile,
+}
+
+#[derive(Component)]
 pub struct Crate;
 
 fn spawn_chain_segment(
@@ -86,6 +91,7 @@ fn spawn_chain_segment(
                 ..sprite
             },
             ChainSegment { prev_tile, tile },
+            Obstacle { tile },
             tile.grid_coord_to_transform(3.0).with_rotation(rot),
         ));
     });
@@ -464,7 +470,7 @@ fn end_chain(
     mut q_selected_chain: Query<(&mut ChainButton, &Children), With<SelectedChain>>,
     mut q_stock_text: Query<&mut Text2d, With<ChainButtonStock>>,
     mut evw_chain_finished: EventWriter<ChainFinished>,
-    q_chain_segments: Query<&ChainSegment>,
+    q_obstacles: Query<&Obstacle>,
 ) {
     if !mouse_button.just_released(MouseButton::Left) {
         return;
@@ -481,7 +487,7 @@ fn end_chain(
         }
 
         // do a naive pathfind to make sure we didn't block the ship hold
-        let pathing_grid = get_pathing_grid(q_chain_segments);
+        let pathing_grid = get_pathing_grid(q_obstacles);
 
         let start = BOAT_POINT;
         let end = HOLD_POINT;
@@ -521,8 +527,7 @@ fn handle_crate_spawned(
                 custom_size: Some(Vec2::splat(TILE_SIZE)),
                 ..sprite
             },
-            ChainSegment {
-                prev_tile: None,
+            Obstacle {
                 tile,
             },
             tile.grid_coord_to_transform(3.0),

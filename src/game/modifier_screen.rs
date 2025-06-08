@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use grid_util::grid::Grid;
 use rand_chacha::rand_core::TryRngCore;
 
-use crate::game::chain::ChainSegment;
+use crate::game::chain::Obstacle;
 use crate::game::events::{CrateSpawned, FoolsGoldSpawned, PrizeCollected};
 use crate::game::game_state::GameState;
 use crate::game::mouse::MousePos;
@@ -134,7 +134,7 @@ fn mouse_down_on_modifier_choice_button(
     mut random_source: ResMut<RandomSource>,
     mut q_modifier_choice_buttons: Query<(&GlobalTransform, &ModifierChoiceButton)>,
     q_modifier_window: Query<(Entity, &ModifierWindow)>,
-    q_chain_segments: Query<&ChainSegment>,
+    q_obstacles: Query<&Obstacle>,
     mut evw_fools_gold_spawned: EventWriter<FoolsGoldSpawned>,
     mut evw_crate_spawned: EventWriter<CrateSpawned>,
 ) {
@@ -149,9 +149,9 @@ fn mouse_down_on_modifier_choice_button(
             commands.entity(e_modifier_window).despawn();
 
             // get a list of tiles occupied by the chain
-            let chain_tiles = q_chain_segments
+            let chain_tiles = q_obstacles
                 .iter()
-                .map(|seg| seg.tile)
+                .map(|obstacle| obstacle.tile)
                 .collect::<Vec<_>>();
 
             // create list of tiles that are not occupied by the chain
@@ -180,7 +180,7 @@ fn mouse_down_on_modifier_choice_button(
                 ModifierChoiceButton::Crates => {
                     let mut non_blocking_free_tiles = Vec::new();
                     for tile in free_tiles.iter() {
-                        let mut pathing_grid = get_pathing_grid(q_chain_segments);
+                        let mut pathing_grid = get_pathing_grid(q_obstacles);
                         pathing_grid.set(tile.x as usize, tile.y as usize, true);
                         pathing_grid.generate_components();
 

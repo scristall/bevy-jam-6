@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::chain::ChainSegment;
+use crate::game::chain::{ChainSegment, Obstacle};
 use crate::game::events::{
     GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted,
 };
@@ -96,7 +96,7 @@ fn find_closest_gold(
     result
 }
 
-pub fn get_pathing_grid(chain_segs: Query<&ChainSegment>) -> PathingGrid {
+pub fn get_pathing_grid(chain_segs: Query<&Obstacle>) -> PathingGrid {
     let mut pathing_grid: PathingGrid = PathingGrid::new(29, 11, false);
     pathing_grid.allow_diagonal_move = false;
 
@@ -121,11 +121,11 @@ fn pirate_movement_system(
     mut commands: Commands,
     time: Res<Time>,
     mut pirates: Query<(Entity, &mut Pirate, &mut Transform, &MovementSpeed)>,
-    chain_segs: Query<&ChainSegment>,
+    q_obstacles: Query<&Obstacle>,
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
 ) {
-    let pathing_grid = get_pathing_grid(chain_segs);
+    let pathing_grid = get_pathing_grid(q_obstacles);
 
     for (entity, mut pirate, mut transform, speed) in pirates.iter_mut() {
         let pirate_location = transform.translation.xy();
@@ -136,7 +136,7 @@ fn pirate_movement_system(
                 let nearest_gold_location = transform.translation.xy();
                 let nearest_gold_point = vec_to_grid_coord(&nearest_gold_location);
 
-                if pirate_location.distance(nearest_gold_location) < 2.0 {
+                if !pirate.carrying_gold && pirate_location.distance(nearest_gold_location) < 2.0 {
                     pirate.state = PirateState::PathingExit;
                     let tile = Tile {
                         x: nearest_gold_point.x,
@@ -185,10 +185,16 @@ fn pirate_movement_system(
         };
 
         let mut direction_vec: Vec2 = target_vec - pirate_location;
-        let distance: f32 = speed.0 * time.delta().as_secs_f32();
-        direction_vec = direction_vec.normalize() * distance;
-        transform.translation.x += direction_vec.x;
-        transform.translation.y += direction_vec.y;
+        let distance = direction_vec.length();
+        let travel: f32 = speed.0 * time.delta().as_secs_f32();
+        direction_vec = direction_vec.normalize() * travel;
+        if distance < travel {
+            transform.translation.x = target_vec.x;
+            transform.translation.y = target_vec.y;
+        } else {
+            transform.translation.x += direction_vec.x;
+            transform.translation.y += direction_vec.y;
+        }
 
         let new_location = transform.translation.xy();
         let new_point = vec_to_grid_coord(&new_location);
