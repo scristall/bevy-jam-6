@@ -7,6 +7,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, on_pirate_death);
     app.add_systems(Update, on_gold_pickup);
     app.add_systems(Update, on_gold_drop);
+    app.add_systems(Update, on_gold_lost);
     app.add_systems(Update, on_prize_collect);
     app.add_systems(Update, on_wave_start);
     app.add_systems(Update, on_play_click);
@@ -47,6 +48,18 @@ fn on_gold_drop(
     for _ in evr_gold_drop.read() {
         commands.spawn(AudioPlayer::new(
             asset_server.load("audio/sound_effects/gold_drop.ogg"),
+        ));
+    }
+}
+
+fn on_gold_lost(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut evr_gold_lost: EventReader<GoldBarLost>,
+) {
+    for _ in evr_gold_lost.read() {
+        commands.spawn(AudioPlayer::new(
+            asset_server.load("audio/sound_effects/gold_lost.ogg"),
         ));
     }
 }

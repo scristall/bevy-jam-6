@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::chain::{ChainSegment, Obstacle};
 use crate::game::events::{
-    GameOver, GoldBarCollected, GoldBarDropped, PirateDeath, WaveComplete, WaveStarted,
+    GameOver, GoldBarCollected, GoldBarDropped, GoldBarLost, PirateDeath, WaveComplete, WaveStarted,
 };
 use crate::game::game_state::GameState;
 use crate::game::goldbar::Gold;
@@ -131,6 +131,7 @@ fn pirate_movement_system(
     q_obstacles: Query<&Obstacle>,
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
+    mut event_gold_lost: EventWriter<GoldBarLost>,
 ) {
     let pathing_grid = get_pathing_grid(q_obstacles);
 
@@ -213,6 +214,9 @@ fn pirate_movement_system(
         let new_point = vec_to_grid_coord(&new_location);
 
         if pirate.state == PirateState::PathingExit && new_point == BOAT_POINT {
+            if pirate.carrying_gold {
+                event_gold_lost.write(GoldBarLost);
+            }
             commands.entity(entity).despawn();
         }
     }

@@ -29,6 +29,9 @@ pub struct GoldBarDropped {
 }
 
 #[derive(Event)]
+pub struct GoldBarLost;
+
+#[derive(Event)]
 pub struct WaveStarted;
 
 #[derive(Event)]
@@ -81,6 +84,7 @@ pub fn plugin(app: &mut App) {
     app.add_event::<TileMouseMove>();
     app.add_event::<GoldBarCollected>();
     app.add_event::<GoldBarDropped>();
+    app.add_event::<GoldBarLost>();
     app.add_event::<WaveStarted>();
     app.add_event::<WaveComplete>();
     app.add_event::<PirateDeath>();
