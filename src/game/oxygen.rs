@@ -15,14 +15,15 @@ fn spawn_oxygen_bar(
     q_pirates: Query<(Entity, &Oxygen), Added<Oxygen>>,
 ) {
     for (e_pirate, oxygen) in q_pirates.iter() {
-        let oxygen_bar_width = 100.0 * oxygen.0 / 100.0;
-        let rect = Rectangle::new(oxygen_bar_width, 10.0);
+        let rect = Rectangle::new(100.0, 10.0);
         let color = Color::linear_rgba(1.0, 0.0, 0.0, 1.0);
+        let mut transform = Transform::from_translation(Vec3::new(0.0, 70.0, 3.0));
+        transform.scale.x = oxygen.0 / 100.0;
         commands.entity(e_pirate).with_child((
             OxygenBar,
             Mesh2d(meshes.add(rect)),
             MeshMaterial2d(materials.add(color)),
-            Transform::from_translation(Vec3::new(0.0, 70.0, 3.0)),
+            transform,
         ));
     }
 }
