@@ -41,7 +41,7 @@ fn wave_start_music(
             AudioPlayer::new(asset_server.load(MUSIC_LIST[music_idx])),
             PlaybackSettings {
                 mode: bevy::audio::PlaybackMode::Loop,
-                volume: Volume::Linear(0.8),
+                volume: Volume::Linear(0.6),
                 ..default()
             },
         ));
