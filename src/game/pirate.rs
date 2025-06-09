@@ -38,6 +38,7 @@ pub struct SpawnTimer(pub Timer);
 pub struct Pirate {
     state: PirateState,
     carrying_gold: bool,
+    marked_for_despawn: bool,
 }
 
 #[derive(Component)]
@@ -119,15 +120,8 @@ pub fn get_pathing_grid(chain_segs: Query<&Obstacle>) -> PathingGrid {
 }
 
 fn pirate_movement_system(
-    mut commands: Commands,
     time: Res<Time>,
-    mut pirates: Query<(
-        Entity,
-        &mut Pirate,
-        &mut Transform,
-        &MovementSpeed,
-        Option<&Sticky>,
-    )>,
+    mut pirates: Query<(&mut Pirate, &mut Transform, &MovementSpeed, Option<&Sticky>)>,
     q_obstacles: Query<&Obstacle>,
     gold_tiles: Query<(Entity, &Transform), (Without<Pirate>, With<Gold>)>,
     mut event_gold_picked_up: EventWriter<GoldBarCollected>,
@@ -135,7 +129,7 @@ fn pirate_movement_system(
 ) {
     let pathing_grid = get_pathing_grid(q_obstacles);
 
-    for (entity, mut pirate, mut transform, speed, sticky) in pirates.iter_mut() {
+    for (mut pirate, mut transform, speed, sticky) in pirates.iter_mut() {
         let pirate_location = transform.translation.xy();
         let pirate_point = vec_to_grid_coord(&pirate_location);
 
@@ -217,7 +211,7 @@ fn pirate_movement_system(
             if pirate.carrying_gold {
                 event_gold_lost.write(GoldBarLost);
             }
-            commands.entity(entity).despawn();
+            pirate.marked_for_despawn = true;
         }
     }
 }
@@ -241,6 +235,7 @@ pub fn pirate_spawn_system(
                 Pirate {
                     state: PirateState::PathingGold,
                     carrying_gold: false,
+                    marked_for_despawn: false,
                 },
                 Sprite {
                     image: asset_server.load("images/pirate.png"),
@@ -262,14 +257,13 @@ pub fn pirate_spawn_system(
 
 fn pirate_oxygen_system(
     time: Res<Time>,
-    mut commands: Commands,
-    mut q_pirates: Query<(&Pirate, &mut Oxygen, &Transform, Entity)>,
+    mut q_pirates: Query<(&mut Pirate, &mut Oxygen, &Transform, Entity)>,
     q_chain: Query<&Transform, With<ChainSegment>>,
     q_trees: Query<&Transform, With<Tree>>,
     mut evw_pirate_death: EventWriter<PirateDeath>,
     mut evw_gold_dropped: EventWriter<GoldBarDropped>,
 ) {
-    for (pirate, mut oxygen, transform, entity) in q_pirates.iter_mut() {
+    for (mut pirate, mut oxygen, transform, entity) in q_pirates.iter_mut() {
         for tree in q_trees.iter() {
             let tree_pos = tree.translation.xy();
             let pirate_pos = transform.translation.xy();
@@ -293,7 +287,7 @@ fn pirate_oxygen_system(
                 let pirate_was_alive = oxygen.0 > 0.0;
                 oxygen.0 -= 10.0 * time.delta().as_secs_f32();
                 if pirate_was_alive && oxygen.0 <= 0.0 {
-                    commands.entity(entity).despawn();
+                    pirate.marked_for_despawn = true;
                     evw_pirate_death.write(PirateDeath {});
                     if pirate.carrying_gold {
                         let pirate_point = vec_to_grid_coord(&pirate_pos);
@@ -344,6 +338,14 @@ fn spawn_setup(mut commands: Commands, mut evr_wave_started: EventReader<WaveSta
     }
 }
 
+fn despawn_pirates(mut commands: Commands, mut q_pirates: Query<(&Pirate, Entity)>) {
+    for (pirate, entity) in q_pirates.iter_mut() {
+        if pirate.marked_for_despawn {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
 pub fn plugin(app: &mut App) {
     app.init_resource::<WaveNumber>();
 
@@ -358,10 +360,11 @@ pub fn plugin(app: &mut App) {
             .run_if(in_state(GameState::WaveInProgress)),
     );
 
-    // We have to run this here to ensure that the spawner is created prior to
-    // checking if the wave is complete
+    // We have to run these here to ensure that:
+    // 1. The spawner is created prior to checking if the wave is complete
+    // 2. The pirates are despawned safely after any other updates
     app.add_systems(
         PostUpdate,
-        (end_wave_system).run_if(in_state(GameState::WaveInProgress)),
+        (end_wave_system, despawn_pirates).run_if(in_state(GameState::WaveInProgress)),
     );
 }
