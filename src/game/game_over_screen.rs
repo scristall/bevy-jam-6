@@ -34,7 +34,7 @@ fn spawn_game_over_screen(
         let color = Color::linear_rgba(0.8, 0.8, 0.8, 1.0);
 
         let game_over_text = format!(
-            "The pirates have escaped with all of your gold!\n\nYou made it to wave {}\n\nThank you for playing!",
+            "The pirates have escaped with all of your gold!\n\nYou made it to wave {}\n\nThank you for playing!\n\nReload the page to play again",
             wave_number.0
         );
 

@@ -44,7 +44,7 @@ fn on_wave_complete(
 
     commands.entity(e_prize_window).with_children(|parent| {
         parent.spawn((
-            Text2d::new("New Chains"),
+            Text2d::new("Choose New Chains"),
             TextFont {
                 font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                 font_size: 50.0,
@@ -68,8 +68,8 @@ fn on_wave_complete(
     spawn_chain_button::<PrizeWindowChainButton>(
         &mut commands,
         e_prize_window,
-        1,
-        6,
+        2,
+        4,
         &asset_server,
         Vec2::new(0.0, 0.0),
     );
@@ -77,8 +77,8 @@ fn on_wave_complete(
     spawn_chain_button::<PrizeWindowChainButton>(
         &mut commands,
         e_prize_window,
-        1,
         3,
+        2,
         &asset_server,
         Vec2::new(400.0, 0.0),
     );

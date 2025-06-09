@@ -302,16 +302,16 @@ fn setup(mut commands: Commands, asset_server: ResMut<AssetServer>) {
     spawn_chain_button::<MainInventoryChainButton>(
         &mut commands,
         e_main_inventory,
-        1,
-        6,
+        2,
+        4,
         &asset_server,
         Vec2::new(0.0, -400.0),
     );
     spawn_chain_button::<MainInventoryChainButton>(
         &mut commands,
         e_main_inventory,
-        2,
         3,
+        2,
         &asset_server,
         Vec2::new(300.0, -400.0),
     );
@@ -527,9 +527,7 @@ fn handle_crate_spawned(
                 custom_size: Some(Vec2::splat(TILE_SIZE)),
                 ..sprite
             },
-            Obstacle {
-                tile,
-            },
+            Obstacle { tile },
             tile.grid_coord_to_transform(3.0),
         ));
     }

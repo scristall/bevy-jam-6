@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::text::TextBounds;
 use grid_util::grid::Grid;
 use rand::RngCore;
 
@@ -15,6 +16,9 @@ const MODIFIER_WINDOW_WIDTH: f32 = 1400.0;
 const MODIFIER_WINDOW_HEIGHT: f32 = 800.0;
 
 const MODIFIER_CHOICE_BUTTON_SIZE: Vec2 = Vec2::new(260.0, 100.0);
+
+const MODIFIER_EXPLANATION_TEXT_BOX_WIDTH: f32 = 400.0;
+const MODIFIER_EXPLANATION_TEXT_BOX_HEIGHT: f32 = 100.0;
 
 #[derive(Component)]
 pub struct ModifierScreen;
@@ -49,6 +53,13 @@ impl BadModifier {
             BadModifier::BrokenChain => "Broken Chain",
         }
     }
+    pub fn get_explanation(&self) -> &str {
+        match self {
+            BadModifier::Crate => "Spawn crates that block the path of the pirates",
+            BadModifier::Tree => "Spawn a tree that and helps the pirates breathe",
+            BadModifier::BrokenChain => "Break a random chain link",
+        }
+    }
 
     pub fn random() -> Self {
         let mut rng = rand::thread_rng();
@@ -66,6 +77,13 @@ impl GoodModifier {
         match self {
             GoodModifier::Glue => "Glue Puddle",
             GoodModifier::FoolsGold => "Fool's Gold",
+        }
+    }
+
+    pub fn get_explanation(&self) -> &str {
+        match self {
+            GoodModifier::Glue => "Spawn a glue puddle that slows the pirates down",
+            GoodModifier::FoolsGold => "Spawn a fool's gold that distracts the pirates",
         }
     }
 
@@ -108,7 +126,7 @@ fn on_wave_complete(
     commands.entity(e_modifier_window).with_children(|parent| {
         let font = asset_server.load("fonts/FiraSans-Bold.ttf");
         parent.spawn((
-            Text2d::new("Choose a New Modifier"),
+            Text2d::new("Choose New Modifiers"),
             TextFont {
                 font: font.clone(),
                 font_size: 50.0,
@@ -148,8 +166,24 @@ fn on_wave_complete(
                         font_size: 30.0,
                         ..default()
                     },
-                    TextColor(Color::linear_rgba(0.0, 1.0, 0.0, 1.0)),
+                    TextColor(Color::linear_rgba(0.14, 0.7, 0.14, 1.0)),
                     Transform::from_xyz(0.0, 400.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(good_modifier.get_explanation()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 300.0, 0.5),
+                    TextLayout::new(JustifyText::Center, LineBreak::WordBoundary),
+                    TextBounds::from(Vec2::new(
+                        MODIFIER_EXPLANATION_TEXT_BOX_WIDTH,
+                        MODIFIER_EXPLANATION_TEXT_BOX_HEIGHT,
+                    )),
                 ));
 
                 parent.spawn((
@@ -161,6 +195,22 @@ fn on_wave_complete(
                     },
                     TextColor(Color::linear_rgba(1.0, 0.0, 0.0, 1.0)),
                     Transform::from_xyz(0.0, 200.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(bad_modifier.get_explanation()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 100.0, 0.5),
+                    TextLayout::new(JustifyText::Center, LineBreak::WordBoundary),
+                    TextBounds::from(Vec2::new(
+                        MODIFIER_EXPLANATION_TEXT_BOX_WIDTH,
+                        MODIFIER_EXPLANATION_TEXT_BOX_HEIGHT,
+                    )),
                 ));
 
                 parent.spawn((
@@ -203,8 +253,24 @@ fn on_wave_complete(
                         font_size: 30.0,
                         ..default()
                     },
-                    TextColor(Color::linear_rgba(0.0, 1.0, 0.0, 1.0)),
+                    TextColor(Color::linear_rgba(0.14, 0.7, 0.14, 1.0)),
                     Transform::from_xyz(0.0, 400.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(good_modifier.get_explanation()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 300.0, 0.5),
+                    TextLayout::new(JustifyText::Center, LineBreak::WordBoundary),
+                    TextBounds::from(Vec2::new(
+                        MODIFIER_EXPLANATION_TEXT_BOX_WIDTH,
+                        MODIFIER_EXPLANATION_TEXT_BOX_HEIGHT,
+                    )),
                 ));
 
                 parent.spawn((
@@ -216,6 +282,22 @@ fn on_wave_complete(
                     },
                     TextColor(Color::linear_rgba(1.0, 0.0, 0.0, 1.0)),
                     Transform::from_xyz(0.0, 200.0, 0.5),
+                ));
+
+                parent.spawn((
+                    Text2d::new(bad_modifier.get_explanation()),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Color::linear_rgba(0.0, 0.0, 0.0, 1.0)),
+                    Transform::from_xyz(0.0, 100.0, 0.5),
+                    TextLayout::new(JustifyText::Center, LineBreak::WordBoundary),
+                    TextBounds::from(Vec2::new(
+                        MODIFIER_EXPLANATION_TEXT_BOX_WIDTH,
+                        MODIFIER_EXPLANATION_TEXT_BOX_HEIGHT,
+                    )),
                 ));
 
                 parent.spawn((

@@ -21,6 +21,7 @@ mod prizes;
 mod ship;
 mod sound_effects;
 mod tile;
+mod title_screen;
 mod tutorial;
 
 use crate::game::game_state::GameState;
@@ -48,6 +49,7 @@ impl Plugin for GamePlugin {
             .add_plugins(sound_effects::plugin)
             .add_plugins(modifiers::plugin)
             .add_plugins(modifier_screen::plugin)
-            .add_plugins(game_over_screen::plugin);
+            .add_plugins(game_over_screen::plugin)
+            .add_plugins(title_screen::plugin);
     }
 }

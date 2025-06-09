@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::game::{
-    chain::Obstacle, events::{GlueSpawned, TreeSpawned}, tile::{Tile, TILE_SIZE}
+    chain::Obstacle,
+    events::{GlueSpawned, TreeSpawned},
+    tile::{TILE_SIZE, Tile},
 };
 
 #[derive(Component)]
@@ -80,9 +82,7 @@ fn spawn_tree(
         transform.translation.y += TILE_SIZE * 0.5;
         commands.spawn((
             Tree,
-            Obstacle {
-                tile: event.tile,
-            },
+            Obstacle { tile: event.tile },
             Sprite {
                 custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE * 2.0)),
                 ..Sprite::from_image(asset_server.load("images/tree.png"))

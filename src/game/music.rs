@@ -22,10 +22,10 @@ fn wave_end_music(
     }
 }
 
-const MUSIC_LIST: &'static [&'static str] = &[
-    "audio/music/wellerman.ogg", 
-    "audio/music/wellerman2.ogg", 
-    "audio/music/wellerman3.ogg"
+const MUSIC_LIST: [&str; 3] = [
+    "audio/music/wellerman.ogg",
+    "audio/music/wellerman2.ogg",
+    "audio/music/wellerman3.ogg",
 ];
 
 fn wave_start_music(
@@ -34,7 +34,6 @@ fn wave_start_music(
     mut evr_wave_started: EventReader<WaveStarted>,
 ) {
     for _ in evr_wave_started.read() {
-        
         let mut rng = rand::thread_rng();
         let music_idx = rng.gen_range(0..MUSIC_LIST.len());
         commands.spawn((
