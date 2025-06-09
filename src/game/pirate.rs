@@ -257,13 +257,13 @@ pub fn pirate_spawn_system(
 
 fn pirate_oxygen_system(
     time: Res<Time>,
-    mut q_pirates: Query<(&mut Pirate, &mut Oxygen, &Transform, Entity)>,
+    mut q_pirates: Query<(&mut Pirate, &mut Oxygen, &Transform)>,
     q_chain: Query<&Transform, With<ChainSegment>>,
     q_trees: Query<&Transform, With<Tree>>,
     mut evw_pirate_death: EventWriter<PirateDeath>,
     mut evw_gold_dropped: EventWriter<GoldBarDropped>,
 ) {
-    for (mut pirate, mut oxygen, transform, entity) in q_pirates.iter_mut() {
+    for (mut pirate, mut oxygen, transform) in q_pirates.iter_mut() {
         for tree in q_trees.iter() {
             let tree_pos = tree.translation.xy();
             let pirate_pos = transform.translation.xy();
