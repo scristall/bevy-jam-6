@@ -3,6 +3,7 @@ name = "chain-lockers"
 authors = ["Sam Cristall <sam.cristall@bennueng.com>"]
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 bevy = { version = "0.16", features = ["wayland", "bevy_ui"] }
